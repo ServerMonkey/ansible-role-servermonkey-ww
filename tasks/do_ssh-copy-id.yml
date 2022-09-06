@@ -1,0 +1,7 @@
+---
+#info: Copies the current users SSH key id_rsa.pub for the user 'root' to target
+- name: Set authorized key for user root, copying it from current user
+  authorized_key:
+    user: root
+    state: present
+    key: "{{ lookup('file', lookup('env','HOME') + '/.ssh/id_rsa.pub') }}"

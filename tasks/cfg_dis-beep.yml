@@ -1,0 +1,11 @@
+---
+#info: Disable PC speaker in Linux Kernel
+- name: Blacklist PC speaker
+  kernel_blacklist:
+    name: pcspkr
+    state: present
+  register: blacklist_cfg_dis_beep
+
+- name: Make Blacklist persistent  # noqa 503
+  command: update-initramfs -u
+  when: blacklist_cfg_dis_beep.changed

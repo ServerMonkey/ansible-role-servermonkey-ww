@@ -1,0 +1,48 @@
+---
+#info: Install full XFCE desktop with a modern theme
+- name: Install XFCE desktop (Debian)
+  package:
+    update_cache: yes
+    name:
+      - task-xfce-desktop
+      - ttf-mscorefonts-installer  # Windows fonts
+      - fonts-open-sans  # common fonts
+  when: ansible_os_family == "Debian"
+
+- name: Install XFCE desktop (Fedora)
+  package:
+    update_cache: yes
+    name:
+      - liberation-fonts  # Windows compatible fonts
+      - open-sans-fonts  # common fonts
+  when: ansible_os_family == "Fedora"
+
+- name: Install XFCE desktop extras
+  package:
+    update_cache: yes
+    name:
+      - picom  # better sync with monitor
+      - menulibre  # startmenu editor
+      - papirus-icon-theme  # modern icon theme
+      - numix-gtk-theme  # modern theme
+
+- name: Install sync monitor script
+  copy:
+    src: picom-sync-monitor.sh
+    dest: '/usr/local/bin/picom-sync-monitor'
+    mode: '+x'
+  when: ansible_virtualization_role == 'host'
+
+- name: Autostart sync monitor script
+  blockinfile:
+    path: '/etc/xdg/autostart/picom-sync-monitor.desktop'
+    create: yes
+    mode: 0644
+    block: |
+      [Desktop Entry]
+      Type=Application
+      Name=picom-sync-monitor
+      Comment=Synchronize Display
+      Exec=/usr/local/bin/picom-sync-monitor
+      OnlyShowIn=XFCE
+  when: ansible_virtualization_role == 'host'

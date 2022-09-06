@@ -1,0 +1,67 @@
+---
+#info: Fixes for Raspberry Pi based systems
+- name: Blacklist Bluetooth
+  kernel_blacklist:
+    name: '{{ loop_cfg_rpi_bt }}'
+    state: present
+  loop:
+    - bluetooth
+    - btrtl
+    - btqca
+    - btsdio
+    - btintel
+    - hci_uart
+    - btbcm
+  loop_control:
+    loop_var: loop_cfg_rpi_bt
+  register: var_cfg_rpi_bt
+  when: '"RASPIROOT" in ansible_cmdline.root and disable_bt'
+
+- name: Blacklist WIFI
+  kernel_blacklist:
+    name: '{{ loop_cfg_rpi_wifi }}'
+    state: present
+  loop:
+    - brcmfmac
+    - brcmutil
+  loop_control:
+    loop_var: loop_cfg_rpi_wifi
+  register: var_cfg_rpi_wifi
+  when: '"RASPIROOT" in ansible_cmdline.root and disable_wifi'
+
+- name: Make Blacklist persistent  # noqa 503
+  command: update-initramfs -u
+  when: 'var_cfg_rpi_bt.changed or var_cfg_rpi_wifi.changed'
+
+- name: Disable WPA service
+  service:
+    name: wpa_supplicant
+    enabled: no
+  when: '"RASPIROOT" in ansible_cmdline.root and disable_wifi'
+
+- name: Raspberry Pi monitor fixes
+  blockinfile:
+    path: '{{ pi_cfg }}'
+    marker: '# {mark} - MONITOR FIX'
+    block: |
+      display_auto_detect=1
+      disable_overscan=1
+  when: '"RASPIROOT" in ansible_cmdline.root'
+
+- name: Raspberry Pi disable WIFI
+  blockinfile:
+    path: '{{ pi_cfg }}'
+    marker: '# {mark} - DISABLE WIFI'
+    block: |
+      dtoverlay=disable-wifi
+      dtoverlay=pi3-disable-wifi
+  when: '"RASPIROOT" in ansible_cmdline.root and disable_wifi'
+
+- name: Raspberry Pi disable Bluetooth
+  blockinfile:
+    path: '{{ pi_cfg }}'
+    marker: '# {mark} - DISABLE BLUETOOTH'
+    block: |
+      dtoverlay=disable-bt
+      dtoverlay=pi3-disable-bt
+  when: '"RASPIROOT" in ansible_cmdline.root and disable_bt'

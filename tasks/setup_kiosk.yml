@@ -1,0 +1,97 @@
+---
+#info: Minimal Openbox desktop for kiosk application, no syslog, works on RPi
+- name: 'Set kiosk user to: {{ kiosk_user }}'
+  set_fact:
+    current_user: '{{ kiosk_user }}'
+    current_pass: '{{ kiosk_pass }}'
+
+# need specific version, because of a bug on Raspberry Pi hardware
+- name: Set specific Chromium version on ARM
+  set_fact:
+    kiosk_chromium_ver: '{{ kiosk_chromium_ver_arm }}'
+  when: '"RASPIROOT" in ansible_cmdline.root'
+
+- name: Install minmal Openbox desktop
+  package:
+    update_cache: yes
+    name:
+      - xorg
+      - lightdm
+      - openbox
+      - picom
+      - unclutter
+      - chromium-common={{ kiosk_chromium_ver }}
+      - chromium={{ kiosk_chromium_ver }}
+
+# need to disable Chromium updates, because of a bug on Raspberry Pi hardware
+- name: Disable updates for chromium on ARM
+  shell: apt-mark hold chromium chromium-common || exit 1
+  changed_when: false
+  when: '"RASPIROOT" in ansible_cmdline.root'
+
+- name: Uninstall rsyslog
+  apt:
+    name: rsyslog
+    state: absent
+
+- include_role: name=servermonkey.ww
+  vars:
+    task: '{{ item }}'
+  loop:
+    - cfg_adduser
+    - cfg_autologin
+
+#- name: Make all Desktop applications start maximized
+#  xml:
+#    path: /etc/xdg/openbox/rc.xml
+#    xpath: /openbox_config/application
+#    attribute: 'maximized'
+#    value: 'yes'
+##
+###above </application> add:
+##  <application class="*">
+##  <maximized>yes</maximized>
+##  </application>
+#
+#- name: Pretty format Openbox XML config
+#  xml:
+#    path: /etc/xdg/openbox/rc.xml
+#    pretty_print: yes
+
+- name: Disable power saving behaviour of monitor
+  lineinfile:
+    path: '{{ openbox_autostart }}'
+    line: xset -dpms
+
+- name: Disable screen saver
+  lineinfile:
+    path: '{{ openbox_autostart }}'
+    line: xset s off
+
+- name: Disable blanking of the video device
+  lineinfile:
+    path: '{{ openbox_autostart }}'
+    line: xset s noblank
+
+- name: Fix screen tearing
+  lineinfile:
+    path: '{{ openbox_autostart }}'
+    line: picom --backend glx --vsync &
+  when: ansible_virtualization_role == 'host'
+
+- name: Enable hide mouse
+  lineinfile:
+    path: '{{ openbox_autostart }}'
+    line: unclutter &
+
+- name: Install kiosk script
+  copy:
+    src: '{{ kiosk_script }}'
+    dest: '/opt/{{ kiosk_script }}'
+    mode: '+x'
+
+- name: Autostart kiosk script and log to ~kiosk.log
+  lineinfile:
+    path: '{{ openbox_autostart }}'
+    regexp: '^/opt/*'
+    line: 'sh -lc /opt/{{ kiosk_script }} >> /home/{{ current_user }}/kiosk.log 2>&1'

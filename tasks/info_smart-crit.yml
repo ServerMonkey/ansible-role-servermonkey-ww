@@ -1,0 +1,10 @@
+---
+#info: Same as info_smart, but show only critical SMART errors
+- name: Set path to script
+  set_fact:
+    this_task_file: '{{ role_path }}/tasks/info_smart.sh'
+
+- include_role: name=servermonkey.sh
+  vars:
+    sh: '{{ this_task_file }}'
+    sh_arg: critical

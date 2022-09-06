@@ -1,0 +1,8 @@
+---
+#info: Use facts, print the IP
+- name: List facts
+  command: 'echo {{ ansible_facts.eth0.ipv4.address }}'
+  register: out
+  changed_when: false
+
+- debug: var=out.stdout_lines

@@ -1,0 +1,58 @@
+---
+#info: Packages that should exist on every system
+#info: . Use 'nvidia-detect' to install NVIDIA GPUs later on
+- name: Install basic sysadmin and Ansible tools
+  package:
+    update_cache: yes
+    name:
+      - console-setup  # to set keyboard layout
+      - smartmontools  # for disk health monitoring
+      - jq  # for disk health monitoring script
+      - python3-lxml  # let's Ansible modify XML configs
+      - iperf3  # for bandwith testing
+      - htop
+      - wget
+
+- name: Install basic tools (Debian)
+  package:
+    name:
+      - locales  # to set language and locales
+  when: ansible_os_family == "Debian"
+
+- name: Check for urandom warnings
+  shell: grep -i 'urandom warning(s) missed due to ratelimiting' /var/log/kern.log
+  register: base_urandom_warning
+  failed_when: false
+  changed_when: false
+
+- name: Install haveged due to urandom warnings
+  package:
+    name:
+      - haveged
+  when: base_urandom_warning.stdout != ""
+
+- name: Install Intel CPU microcode
+  package:
+    update_cache: yes
+    name:
+      - intel-microcode
+  # only install microcode on real hardware, not VMs
+  when: '"GenuineIntel" in ansible_processor and ansible_virtualization_role == "host"'
+
+- name: Detect GPU
+  script: detect-gpu.sh
+  register: base_detect_gpu
+  failed_when: '"Failed" in base_detect_gpu.stdout'
+  changed_when: false
+
+- name: Install AMD GPU driver
+  package:
+    name:
+      - firmware-amd-graphics
+  when: '"AMD" in base_detect_gpu.stdout'
+
+- name: Install nvidia-detect
+  package:
+    name:
+      - nvidia-detect
+  when: '"NVIDIA" in base_detect_gpu.stdout'

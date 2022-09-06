@@ -1,0 +1,12 @@
+---
+#info: Fast check for an open SSH port
+- block:
+    - name: Check network connection
+      command: nc -z -w5 {{ inventory_hostname }} 22
+      connection: local
+
+  rescue:
+    - include_role: name=servermonkey.ww_logger
+      vars:
+        ww_msg: Unreachable via SSH
+        ww_logfile: servermonkey.ww_info_test-ssh

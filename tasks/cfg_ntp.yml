@@ -1,0 +1,6 @@
+---
+#info: Set correct clock and enable NTP (requires Internet)
+- include_role:
+    name: geerlingguy.ntp
+  vars:
+    ntp_timezone: '{{ cfg_ntp_timezone }}'

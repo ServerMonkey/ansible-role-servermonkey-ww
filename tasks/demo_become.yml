@@ -1,0 +1,7 @@
+---
+#info: Run as root example
+- name: Run ls as root
+  command: ls
+  become: yes
+  become_method: su
+  changed_when: false

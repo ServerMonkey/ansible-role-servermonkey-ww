@@ -1,0 +1,6 @@
+---
+#info: Show physical location, os, hardware and description
+- include_role: name=servermonkey.ww_logger
+  vars:
+    ww_msg: '{{ im_location }} | {{ im_os }} | {{ im_hardware }} | {{ im_description }}'
+    ww_logfile: servermonkey.ww_info_inventory

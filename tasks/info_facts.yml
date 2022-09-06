@@ -1,0 +1,5 @@
+---
+#info: List all available Asible facts
+- name: List facts
+  debug:
+    var: ansible_facts

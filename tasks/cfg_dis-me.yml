@@ -1,0 +1,18 @@
+---
+#info: Disable Intel ME in Linux Kernel
+- name: Blacklist Intel ME
+  kernel_blacklist:
+    name: '{{ loop_cfg_dis_me }}'
+    state: present
+  loop:
+    - mei
+    - mei_me
+    - mei_hdcp
+  loop_control:
+    loop_var: loop_cfg_dis_me
+  register: blacklist_cfg_dis_me
+  when: ansible_virtualization_role == 'host'
+
+- name: Make Blacklist persistent  # noqa 503
+  command: update-initramfs -u
+  when: blacklist_cfg_dis_me.changed and ansible_virtualization_role == 'host'

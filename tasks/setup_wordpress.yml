@@ -1,0 +1,219 @@
+---
+#info: Install Wordpress with postfix and nginx on Debian 10,11
+# based on https://www.rosehosting.com/blog/how-to-install-wordpress-with-nginx-on-debian-10/
+
+- name: Install required software
+  package:
+    update_cache: yes
+    name:
+      - unzip
+      - nginx
+      - postfix
+      - mariadb-server
+      - mariadb-client
+      - php-cgi
+      - php-common
+      - php-curl
+      - php-fpm
+      - php-pear
+      - php-mbstring
+      - php-zip
+      - php-net-socket
+      - php-gd
+      - php-xml-util
+      - php*gettext  # name changed in Debian 11
+      - php-mysql
+      - php-bcmath
+      - php-imagick  # around 100 MB space
+      - php-intl
+
+- name: find PHP config file
+  shell: php -i | grep 'Loaded Conf' | sed -n 's/^.*=> //p'
+  register: phpcfg
+
+- name: find PHP service name number
+  shell: |
+    echo {{ phpcfg.stdout }} | \
+    awk -F  '/php/' '{print $2}' | \
+    awk -F '/cli/' '{print $1}'
+  register: phpver
+
+- name: php.ini set post_max_size
+  lineinfile:
+    path: '{{ phpcfg.stdout }}'
+    regexp: '^post_max_size'
+    line: post_max_size = 64M
+
+- name: php.ini set memory_limit
+  lineinfile:
+    path: '{{ phpcfg.stdout }}'
+    regexp: '^memory_limit'
+    line: memory_limit = 256M
+
+- name: php.ini set max_execution_time
+  lineinfile:
+    path: '{{ phpcfg.stdout }}'
+    regexp: '^max_execution_time'
+    line: max_execution_time = 300
+
+- name: php.ini set upload_max_filesize
+  lineinfile:
+    path: '{{ phpcfg.stdout }}'
+    regexp: '^upload_max_filesize'
+    line: upload_max_filesize = 32M
+
+- name: php.ini set date.timezone
+  lineinfile:
+    path: '{{ phpcfg.stdout }}'
+    regexp: '^date.timezone'
+    line: date.timezone = '{{ setup_wordpress_php_timezone }}'
+
+- name: Restart PHP service
+  service:
+    name: 'php{{ phpver.stdout }}-fpm'
+    state: restarted
+
+- name: Set login_file location
+  stat: path=/root/wordpress_sql_login.txt
+  register: login_file
+
+- name: First time Wordpress setup
+  block:
+    - name: Generate random SQL password
+      set_fact: wp_sql_pass="{{ lookup('password', '/dev/null length=20') }}"
+
+    - name: Setup SQL database
+      script: 'wordpress-sql.sh {{ setup_wordpress_sql_db }} {{ setup_wordpress_sql_user  }} {{ wp_sql_pass }}'
+
+    - name: Install Wordpress
+      unarchive:
+        src: '{{ ww_fastpkg_bandwagon }}web/wordpress_5.8.zip'
+        dest: '{{ setup_wordpress_www_root }}'
+
+    - name: Copy Wordpress config
+      copy:
+        src: '{{ setup_wordpress_dir }}wp-config-sample.php'
+        dest: '{{ setup_wordpress_cfg }}'
+        remote_src: yes
+        mode: 0640
+
+    - name: wp-config.php set database name
+      replace:
+        dest: '{{ setup_wordpress_cfg }}'
+        regexp: 'database_name_here'
+        replace: '{{ setup_wordpress_sql_db }}'
+
+    - name: wp-config.php set database user name
+      replace:
+        dest: '{{ setup_wordpress_cfg }}'
+        regexp: 'username_here'
+        replace: '{{ setup_wordpress_sql_user  }}'
+
+    - name: wp-config.php set database password
+      replace:
+        dest: '{{ setup_wordpress_cfg }}'
+        regexp: 'password_here'
+        replace: '{{ wp_sql_pass }}'
+
+    - name: Delete default Plugin Hello
+      file:
+        path: '{{ setup_wordpress_dir }}wp-content/plugins/hello.php'
+        state: absent
+
+    - name: Delete default Plugin Akismet
+      file:
+        path: '{{ setup_wordpress_dir }}wp-content/plugins/akismet'
+        state: absent
+
+    - name: Install all Wordpress Plugins
+      unarchive:
+        src: '{{ item }}'
+        dest: '{{ setup_wordpress_dir }}wp-content/plugins/'
+      with_fileglob: '{{ ww_fastpkg_bandwagon }}web/wordpress-plugin*.zip'
+
+    - name: Install all Wordpress Themes
+      unarchive:
+        src: '{{ item }}'
+        dest: '{{ setup_wordpress_dir }}wp-content/themes/'
+      with_fileglob: '{{ ww_fastpkg_bandwagon }}web/wordpress-theme*.zip'
+
+  when: login_file.stat.exists == false
+
+- name: Harden Wordpress - Permission only for www-data
+  file:
+    path: '{{ setup_wordpress_dir }}'
+    owner: 'www-data'
+    group: 'www-data'
+    recurse: yes
+
+- name: Harden Wordpress - Directory and file permissions
+  file:
+    path: '{{ setup_wordpress_dir }}'
+    state: directory
+    recurse: yes
+    mode: u=rwX,g=rX,o=rX
+
+- name: Harden Wordpress - .htaccess
+  copy:
+    src: 'wordpress_htaccess'
+    dest: '{{ setup_wordpress_dir }}.htaccess'
+    mode: 0644
+
+- name: Harden Wordpress - Disable PHP file editing
+  lineinfile:
+    path: '{{ setup_wordpress_cfg }}'
+    insertafter: '.*custom values.*'
+    line: "define( 'DISALLOW_FILE_EDIT', true );"
+
+- name: Remove Nginx default site
+  file:
+    path: '/etc/nginx/sites-enabled/default'
+    state: absent
+
+- name: Copy Nginx wordpress.conf
+  copy:
+    src: '{{ setup_wordpress_nginx_cfg_src }}'
+    dest: '{{ setup_wordpress_nginx_cfg }}'
+    mode: 0644
+
+- name: Set website root directory
+  replace:
+    dest: '{{ setup_wordpress_nginx_cfg }}'
+    regexp: '<WEBSITE_ROOT>'
+    replace: '{{ setup_wordpress_dir }}'
+
+- name: Set registered domain name to the same as hostname
+  replace:
+    dest: '{{ setup_wordpress_nginx_cfg }}'
+    regexp: '<WEBSITE_NAME>'
+    replace: '{{ ansible_host }}'
+
+- name: Set PHP version for fastcgi
+  replace:
+    dest: '{{ setup_wordpress_nginx_cfg }}'
+    regexp: '<PHP_VERSION>'
+    replace: '{{ phpver.stdout }}'
+
+- name: Nginx enable virtual block for Wordpress
+  file:
+    src: '{{ setup_wordpress_nginx_cfg }}'
+    dest: '/etc/nginx/sites-enabled/wordpress.conf'
+    state: link
+
+- name: Restart Nginx service
+  service:
+    name: 'nginx'
+    state: restarted
+
+- name: Restart PHP service
+  service:
+    name: 'php{{ phpver.stdout }}-fpm'
+    state: restarted
+
+- name: Show SQL password location
+  include_role: name=servermonkey.ww_logger
+  vars:
+    ww_msg: 'SQL password is in: /root/wordpress_sql_login.txt'
+    ww_logfile: servermonkey.ww_setup_wordpress
+
+# todo: add wp-cli

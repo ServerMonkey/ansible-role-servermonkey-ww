@@ -1,0 +1,15 @@
+---
+#info: Auto login user to window-manager, lightdm (XFCE, Openbox)
+- name: Autologin user
+  lineinfile:
+    path: '{{ lightdm_cfg }}'
+    regexp: '^autologin-user='
+    line: 'autologin-user={{ current_user }}'
+    insertafter: '^#autologin-user='
+
+- name: Set autologin timeout
+  lineinfile:
+    path: '{{ lightdm_cfg }}'
+    regexp: '^autologin-user-timeout='
+    line: 'autologin-user-timeout=0'
+    insertafter: '^#autologin-user-timeout='

@@ -1,0 +1,22 @@
+---
+#info: Install Apache Guacamole on Debian 10 (requires Internet)
+#info: , http://<HOST>>:8080/guacamole/
+#info: , Default login USER/PASS: guacadmin
+- name: Install required software
+  apt:
+    pkg:
+      - unzip
+
+- name: Create directories
+  file:
+    path: '/root/guac_install/'
+    state: directory
+    mode: 0755
+
+- name: Copy Guacamole
+  unarchive:
+    src: '{{ item }}'
+    dest: '/root/guac_install/'
+  with_fileglob: '{{ admin }}guac*.zip'
+
+# todo: this is not done yet

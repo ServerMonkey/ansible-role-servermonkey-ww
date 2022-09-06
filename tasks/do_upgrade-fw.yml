@@ -1,0 +1,12 @@
+---
+#info: Upgrade the hardware's firmware, like UEFI or SSD, requires internet
+- name: Install firmware update daemon
+  package:
+    update_cache: yes
+    name: fwupd  # for UEFI and SSD fw-upgrades
+
+- name: Update firmware over internet
+  shell: |
+    fwupdmgr get-updates -y || true
+    fwupdmgr update -y --no-reboot-check || true
+  changed_when: false

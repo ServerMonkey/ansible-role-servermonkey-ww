@@ -1,0 +1,23 @@
+---
+- name: Set path to script
+  set_fact:
+    task_file: '{{ role_path }}/tasks/{{ task }}'
+  run_once: true
+
+- name: check if {{ task }}.yml exists
+  connection: local
+  stat:
+    path: '{{ task_file }}.yml'
+  register: task_is_yml
+  run_once: true
+  become: false
+
+- name: include yml
+  include_tasks: '{{ task_file }}.yml'
+  when: task_is_yml.stat.exists
+
+- name: include sh
+  include_role: name=servermonkey.sh
+  vars:
+    sh: '{{ task_file }}.sh'
+  when: not task_is_yml.stat.exists

@@ -1,0 +1,10 @@
+---
+#info: Same as cfg_apt, also enable local offline repo in /opt/packages
+- name: Set path to script
+  set_fact:
+    this_task_file: '{{ role_path }}/tasks/cfg_apt.sh'
+
+- include_role: name=servermonkey.sh
+  vars:
+    sh: '{{ this_task_file }}'
+    sh_arg: local

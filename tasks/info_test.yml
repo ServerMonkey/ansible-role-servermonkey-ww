@@ -1,0 +1,21 @@
+---
+#info: Test if a machine is online. Gather Ansible facts via sudo and run Ping
+#use: Needs to be run on newly added systems
+- block:
+    - name: Check network connection
+      wait_for_connection:
+        timeout: 5  # does not work, ansible bug, replace with raw and netcat
+      register: info_test_error
+
+    - name: Ansible Ping
+      ping:
+
+    - name: Gather facts (as root)
+      setup:
+      become: true
+
+  rescue:
+    - include_role: name=servermonkey.ww_logger
+      vars:
+        ww_msg: 'Unreachable: {{ info_test_error.msg }}'
+        ww_logfile: servermonkey.ww_info_test

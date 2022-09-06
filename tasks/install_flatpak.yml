@@ -1,0 +1,18 @@
+---
+#info: Install flatpak for Debain 11
+- name: Install flatpak
+  package:
+    update_cache: yes
+    name:
+      - flatpak
+      - gnome-software-plugin-flatpak
+
+- name: Add flathub.org repo
+  shell: flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+  register: flatpak_repo_shell
+  failed_when: flatpak_repo_shell.stdout != ""
+  changed_when: flatpak_repo_shell.stdout != ""
+
+- name: Install flatseal
+  flatpak:
+    name: com.github.tchx84.Flatseal

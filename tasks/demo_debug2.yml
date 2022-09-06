@@ -1,0 +1,9 @@
+---
+#info: Return a message from internal shell to the local terminal
+- name: Debug message from shell
+  command: echo "This is just a message test"
+  register: shell_result
+  changed_when: false
+
+- debug:
+    var: shell_result.stdout_lines

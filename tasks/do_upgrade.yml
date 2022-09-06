@@ -1,0 +1,8 @@
+---
+#info: Upgrade Debian OS in safe mode with force-confold and force-confdef
+- name: Upgrade OS (Safe)
+  apt:
+    upgrade: safe
+    update_cache: yes
+    dpkg_options: 'force-confold,force-confdef'
+    autoremove: yes

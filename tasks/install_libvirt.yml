@@ -1,0 +1,24 @@
+---
+#info: Install KVM and Vagrant with default network config
+- name: Install KVM and Vagrant
+  package:
+    update_cache: yes
+    name:
+      - qemu-kvm
+      - libvirt-clients
+      - libvirt-daemon-system
+      - virt-manager
+      - bridge-utils
+      - vagrant-libvirt
+      - python3-lxml  # let's Ansible modify VM's XML configs, for KVM configs
+
+- name: Set libvirt default connect URI
+  lineinfile:
+    path: '/etc/libvirt/libvirt.conf'
+    line: 'uri_default = "qemu:///system"'
+
+- name: Start KVM network
+  shell: |
+    virsh net-autostart default
+    virsh net-start default || true
+  changed_when: false

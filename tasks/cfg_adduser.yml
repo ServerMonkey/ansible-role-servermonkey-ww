@@ -1,0 +1,9 @@
+---
+#info: Add a normal user and group to the OS
+- name: Add user '{{ current_user }}'
+  shell: "adduser --gecos '' {{ current_user }} || true"
+  changed_when: false
+
+- name: Change password for user '{{ current_user }}'
+  shell: "echo '{{ current_user }}:{{ current_pass }}' | chpasswd"
+  changed_when: false

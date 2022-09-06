@@ -1,0 +1,5 @@
+---
+#info: Update APT Cache
+- name: Update APT Cache
+  package:
+    update_cache: yes

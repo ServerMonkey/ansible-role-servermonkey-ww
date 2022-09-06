@@ -1,0 +1,155 @@
+---
+#info: Install ELK stack version 8 - Elasticsearch, Logstash, Kibana
+# Based on:
+# https://www.elastic.co/guide/en/elasticsearch/reference/current/deb.html
+# https://www.elastic.co/guide/en/kibana/current/deb.html
+# https://www.elastic.co/guide/en/logstash/current/installing-logstash.html
+
+- name: Install required tools
+  package:
+    update_cache: yes
+    name:
+      - gpg
+      - apt-transport-https
+      - curl
+      - jq
+      - httpie
+
+- name: Add elastic.co repo GPG key
+  apt_key:
+    url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    state: present
+
+- name: Add elastic.co APT repo
+  lineinfile:
+    path: /etc/apt/sources.list
+    line: 'deb https://artifacts.elastic.co/packages/8.x/apt stable main'
+
+- name: Install ELK stack
+  package:
+    update_cache: yes
+    name:
+      - elasticsearch
+      - kibana
+      - logstash
+
+- name: Enable Elasticsearch memory_lock
+  lineinfile:
+    path: /etc/elasticsearch/elasticsearch.yml
+    regexp: 'bootstrap.memory_lock:'
+    line: 'bootstrap.memory_lock: true'
+
+- name: Set JVM heap size to 50 percent of ram on LXC
+  lineinfile:
+    path: /etc/elasticsearch/jvm.options.d/jvm.options
+    regexp: '-Xms'
+    line: '-Xms{{ ((ansible_memtotal_mb * 0.001) |round(0) / 2) |int }}g'
+  when: 'ansible_virtualization_type == "lxc"'
+
+- name: Set JVM heap size to 50 percent of ram on LXC
+  lineinfile:
+    path: /etc/elasticsearch/jvm.options.d/jvm.options
+    regexp: '-Xmx'
+    line: '-Xmx{{ ((ansible_memtotal_mb * 0.001) |round(0) / 2) |int }}g'
+  when: 'ansible_virtualization_type == "lxc"'
+
+- name: Enable Kibana on all connections
+  lineinfile:
+    path: /etc/kibana/kibana.yml
+    regexp: 'server.host:'
+    line: 'server.host: 0.0.0.0'
+
+- name: Set Kibana URL to current FQDN
+  lineinfile:
+    path: /etc/kibana/kibana.yml
+    regexp: 'server.publicBaseUrl:'
+    line: 'server.publicBaseUrl: http://{{ ansible_fqdn }}'
+
+- name: Create ELK shutdown script
+  file:
+    path: /opt/shutdown_elk
+    state: touch
+    mode: a+x
+    modification_time: preserve
+    access_time: preserve
+
+- name: Config ELK shutdown script
+  blockinfile:
+    path: /opt/shutdown_elk
+    block: |
+      #!/bin/sh
+      service logstash stop
+      service kibana stop
+      service elasticsearch stop
+
+- name: Create ELK shutdown SystemD unit file
+  file:
+    path: /etc/systemd/system/elk-shutdown.service
+    state: touch
+    mode: a+x
+    modification_time: preserve
+    access_time: preserve
+
+- name: Config ELK shutdown SystemD unit file
+  blockinfile:
+    path: /etc/systemd/system/elk-shutdown.service
+    block: |
+      [Unit]
+      Description=Properly shutdown ELK stack
+      DefaultDependencies=no
+      Before=shutdown.target
+
+      [Service]
+      Type=oneshot
+      ExecStart=/opt/shutdown_elk
+      TimeoutStartSec=0
+
+      [Install]
+      WantedBy=shutdown.target
+
+- name: Enable elk-shutdown.service
+  systemd:
+    name: elk-shutdown.service
+    daemon_reload: yes
+    enabled: yes
+
+- name: Enable elasticsearch.service
+  systemd:
+    name: elasticsearch.service
+    state: started
+    enabled: yes
+
+- name: Enable kibana.service
+  systemd:
+    name: kibana.service
+    state: started
+    enabled: yes
+
+- name: Enable logstash.service
+  systemd:
+    name: logstash.service
+    state: started
+    enabled: yes
+
+- name: Wait for Kibana to be ready
+  wait_for:
+    port: 5601
+    timeout: 60
+
+- name: Register login credentials  # noqa 303
+  shell: |
+    set -o pipefail
+    systemctl status kibana.service  | grep -oP 'Go to \K.*'
+    cat /var/log/apt/term.log | grep 'superuser is'
+    echo "Kibana enrollment token:"
+    /usr/share/elasticsearch/bin/elasticsearch-create-enrollment-token -s kibana
+    /usr/share/kibana/bin/kibana-verification-code
+  changed_when: false
+  register: setup_elk_pass
+  no_log: true
+
+- name: Show login credentials
+  include_role: name=servermonkey.ww_logger
+  vars:
+    ww_msg: '{{ setup_elk_pass.stdout }}'
+    ww_logfile: servermonkey.ww_setup_elk

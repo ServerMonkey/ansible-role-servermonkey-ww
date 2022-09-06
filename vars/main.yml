@@ -1,0 +1,46 @@
+# undefined variables, please define with set_fact or in playbook
+# current_user
+# current_pass
+
+# generic
+ww_fastpkg_bandwagon: "{{ lookup('env','HOME') }}/.fastpkg/packages/bandwagon/"
+ww_timezone: 'Europe/Stockholm'
+
+# cfg_autologin
+lightdm_cfg: '/etc/lightdm/lightdm.conf'
+
+# cfg_locales
+locales_keyboard: 'se'
+locales_language: 'en_US.UTF-8'
+
+# cfg_ntp
+cfg_ntp_timezone: '{{ ww_timezone }}'
+
+# cfg_raspberry-pi
+pi_cfg: '/boot/firmware/config.txt'
+disable_bt: false
+disable_wifi: false
+
+# do_backup-home
+backup_tmp: '/tmp/{{ inventory_hostname }}_home-backup.tar.bz2'
+
+# install_wine
+wine_user: '{{ ansible_user }}'
+
+# setup_kiosk
+kiosk_user: 'kiosk'
+kiosk_pass: 'kiosk'
+kiosk_script: 'example-kiosk.sh'
+kiosk_chromium_ver: '*'
+kiosk_chromium_ver_arm: '90.0.4430.212-1'  # because of a bug on Raspberry Pi
+openbox_autostart: '/etc/xdg/openbox/autostart'
+
+# setup_wordpress
+setup_wordpress_php_timezone: '{{ ww_timezone }}'
+setup_wordpress_www_root: '/var/www/html/'
+setup_wordpress_dir: '{{ setup_wordpress_www_root }}wordpress/'
+setup_wordpress_cfg: '{{ setup_wordpress_dir }}wp-config.php'
+setup_wordpress_nginx_cfg_src: 'nginx_wordpress.conf'
+setup_wordpress_nginx_cfg: '/etc/nginx/sites-available/wordpress.conf'
+setup_wordpress_sql_db: 'wpdb'
+setup_wordpress_sql_user: 'wpadmin'
