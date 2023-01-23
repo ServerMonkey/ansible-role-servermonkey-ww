@@ -1,0 +1,36 @@
+---
+#info: Restore a custom XFCE configuration to target host
+- name: Force all XFCE users to logout
+  shell: 'skill -KILL xfce4-session'
+
+- name: Delete XFCE cache
+  file:
+    state: absent
+    path: '/home/{{ current_user }}/.cache/xfce4'
+  changed_when: false
+
+- name: Delete sessions cache
+  file:
+    state: absent
+    path: '/home/{{ current_user }}/.cache/sessions'
+  changed_when: false
+
+- name: Delete XFCE cfg
+  file:
+    state: absent
+    path: '/home/{{ current_user }}/.config/xfce4'
+  changed_when: false
+
+- name: Create XFCE .config directory
+  file:
+    path: '/home/{{ current_user }}/.config/xfce4'
+    state: directory
+    recurse: yes
+  register: gggg
+  become_user: '{{ current_user }}'
+
+- name: Copy custom XFCE config
+  copy:
+    src: '{{ cfg_xfce_config }}/'
+    dest: '/home/{{ current_user }}/.config/xfce4/'
+  become_user: '{{ current_user }}'

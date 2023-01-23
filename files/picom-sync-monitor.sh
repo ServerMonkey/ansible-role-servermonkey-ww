@@ -1,5 +1,5 @@
 #!/bin/sh
-#info: On XFCE, sync graphics card to monitor via OpenGL backend
+#info: On XFCE, sync GPU to monitor via OpenGL backend
 # based on https://wiki.archlinux.org/title/Xfwm#Video_tearing
 
 LOG_DIR="$HOME/.local/log"

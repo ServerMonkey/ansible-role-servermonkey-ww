@@ -1,10 +1,11 @@
 ---
-- name: Set path to script
+#info: this lets you use include_role with shell scripts
+- name: Set path
   set_fact:
     task_file: '{{ role_path }}/tasks/{{ task }}'
   run_once: true
 
-- name: check if {{ task }}.yml exists
+- name: Check for {{ task }}.yml
   connection: local
   stat:
     path: '{{ task_file }}.yml'
@@ -12,12 +13,24 @@
   run_once: true
   become: false
 
-- name: include yml
+- name: Include yml
   include_tasks: '{{ task_file }}.yml'
   when: task_is_yml.stat.exists
 
-- name: include sh
+- name: Check for {{ task }}.sh
+  connection: local
+  stat:
+    path: '{{ task_file }}.sh'
+  register: task_is_sh
+  run_once: true
+  become: false
+
+- name: Include sh
   include_role: name=servermonkey.sh
   vars:
     sh: '{{ task_file }}.sh'
-  when: not task_is_yml.stat.exists
+  when: task_is_sh.stat.exists
+
+- fail:
+    msg: "Can not find any task file '{{ task }}.yml' or '{{ task }}.sh'"
+  failed_when: "task_is_sh.stat.exists == false and task_is_yml.stat.exists == false"

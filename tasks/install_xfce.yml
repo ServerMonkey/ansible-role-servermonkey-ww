@@ -1,30 +1,56 @@
 ---
 #info: Install full XFCE desktop with a modern theme
-- name: Install XFCE desktop (Debian)
+- name: Install simple XFCE desktop (Debian)
+  package:
+    update_cache: yes
+    name:
+      - xfce4
+      - xfce4-*
+  when: ansible_os_family == "Debian" and install_xfce_full == false
+
+- name: Install full XFCE desktop (Debian)
   package:
     update_cache: yes
     name:
       - task-xfce-desktop
-      - ttf-mscorefonts-installer  # Windows fonts
-      - fonts-open-sans  # common fonts
+  when: ansible_os_family == "Debian" and install_xfce_full
+
+- name: Fonts (Debian)
+  package:
+    name:
+      - fonts-liberation  # Windows compatible fonts ~2 MB
+      - fonts-open-sans  # common fonts ~3 MB
   when: ansible_os_family == "Debian"
 
-- name: Install XFCE desktop (Fedora)
+- name: Fonts (Fedora)
   package:
-    update_cache: yes
     name:
       - liberation-fonts  # Windows compatible fonts
       - open-sans-fonts  # common fonts
   when: ansible_os_family == "Fedora"
 
-- name: Install XFCE desktop extras
+- name: Install XFCE desktop basic tools
   package:
     update_cache: yes
     name:
-      - picom  # better sync with monitor
-      - menulibre  # startmenu editor
-      - papirus-icon-theme  # modern icon theme
-      - numix-gtk-theme  # modern theme
+      - menulibre  # startmenu editor ~16 MB
+      - papirus-icon-theme  # modern icon theme ~167 MB
+      - numix-gtk-theme  # modern theme ~3 MB
+      - plank  # icon based menu bar ~4 MB
+      - dconf-cli  # CLI editor for GSettings <1 MB
+
+- name: Install XFCE desktop extras
+  package:
+    name:
+      - dconf-editor  # GUI editor for GSettings ~3 MB
+      - grub-customizer  # build custom GRUB themes ~4 MB
+      - lightdm-settings  # configure slick-greeter <1 MB
+  when: install_xfce_extras
+
+- name: Install picom (sync monitor)
+  package:
+    name: picom  # better sync with monitor ~1 MB
+  when: ansible_virtualization_role == 'host'
 
 - name: Install sync monitor script
   copy:
@@ -46,3 +72,38 @@
       Exec=/usr/local/bin/picom-sync-monitor
       OnlyShowIn=XFCE
   when: ansible_virtualization_role == 'host'
+
+- name: Autostart set-resolution script on VMs
+  blockinfile:
+    path: '/etc/xdg/autostart/set-resolution.desktop'
+    create: yes
+    mode: 0644
+    block: |
+      [Desktop Entry]
+      Type=Application
+      Name=set-resolution
+      Comment=Set resolution
+      Exec=xrandr -s {{ ww_vm_res_x }}x{{ ww_vm_res_y }}
+      OnlyShowIn=XFCE
+  when: ansible_virtualization_role == 'guest'
+
+- name: Install set-volume script
+  copy:
+    src: xfce4-reset-volume.sh
+    dest: '/usr/local/bin/xfce4-reset-volume'
+    mode: '+x'
+  when: install_xfce_volume
+
+- name: Autostart set-volume script
+  blockinfile:
+    path: '/etc/xdg/autostart/set-volume.desktop'
+    create: yes
+    mode: 0644
+    block: |
+      [Desktop Entry]
+      Type=Application
+      Name=set-volume
+      Comment=Reset volume
+      Exec=xfce4-reset-volume {{ install_xfce_volume_default }}
+      OnlyShowIn=XFCE
+  when: install_xfce_volume

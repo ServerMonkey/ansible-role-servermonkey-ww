@@ -1,5 +1,5 @@
 ---
-#info: Install flatpak for Debain 11
+#info: Install flatpak for Debain 11 (must run after install_xfce)
 - name: Install flatpak
   package:
     update_cache: yes
@@ -16,3 +16,15 @@
 - name: Install flatseal
   flatpak:
     name: com.github.tchx84.Flatseal
+
+- name: Check if APT numix theme is installed
+  shell: apt list numix-gtk-theme 2>/dev/null
+  register: shell_install_flatpak_numix
+  changed_when: false
+
+- name: Install numix theme for flatpak
+  flatpak:
+    name: org.gtk.Gtk3theme.Numix
+  register: install_flatpak_numix
+  when: "'installed' not in shell_install_flatpak_numix.stdout_lines"
+  changed_when: "'Installing' in install_flatpak_numix.stdout"

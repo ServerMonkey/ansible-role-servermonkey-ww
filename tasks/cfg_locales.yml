@@ -1,75 +1,82 @@
 ---
 #info: Set the keyboard layout and language / locals
-- name: Set keyboard layout
-  lineinfile:
-    path: /etc/default/keyboard
-    regexp: '^XKBLAYOUT='
-    line: 'XKBLAYOUT="{{ locales_keyboard }}"'
-    create: yes
-    mode: '0644'
+- block:
+    - name: Set keyboard layout
+      lineinfile:
+        path: /etc/default/keyboard
+        regexp: '^XKBLAYOUT='
+        line: 'XKBLAYOUT="{{ locales_keyboard }}"'
+        create: yes
+        mode: '0644'
 
-- name: Set keyboard model
-  lineinfile:
-    path: /etc/default/keyboard
-    regexp: '^XKBMODEL='
-    line: 'XKBMODEL="pc105"'
+    - name: Set keyboard model
+      lineinfile:
+        path: /etc/default/keyboard
+        regexp: '^XKBMODEL='
+        line: 'XKBMODEL="pc105"'
 
-- name: Set keyboard variant
-  lineinfile:
-    path: /etc/default/keyboard
-    regexp: '^XKBVARIANT='
-    line: 'XKBVARIANT=""'
+    - name: Set keyboard variant
+      lineinfile:
+        path: /etc/default/keyboard
+        regexp: '^XKBVARIANT='
+        line: 'XKBVARIANT=""'
 
-- name: Set keyboard options
-  lineinfile:
-    path: /etc/default/keyboard
-    regexp: '^XKBOPTIONS='
-    line: 'XKBOPTIONS=""'
+    - name: Set keyboard options
+      lineinfile:
+        path: /etc/default/keyboard
+        regexp: '^XKBOPTIONS='
+        line: 'XKBOPTIONS=""'
 
-- name: Set keyboard backspace
-  lineinfile:
-    path: /etc/default/keyboard
-    regexp: '^BACKSPACE='
-    line: 'BACKSPACE="guess"'
+    - name: Set keyboard backspace
+      lineinfile:
+        path: /etc/default/keyboard
+        regexp: '^BACKSPACE='
+        line: 'BACKSPACE="guess"'
 
-# Set language / locales
-- name: Ensure a locale exists
-  locale_gen:
-    name: '{{ locales_language }}'
-    state: present
+    # Set language / locales
+    - name: Ensure a locale exists
+      locale_gen:
+        name: '{{ locales_language }}'
+        state: present
 
-- name: Ensure a locale exists (locale-gen)  # noqa 503
-  command: "locale-gen '{{ locales_language }}'"
-  changed_when: false
+    - name: Ensure a locale exists (locale-gen)  # noqa 503
+      command: "locale-gen '{{ locales_language }}'"
+      changed_when: false
 
-- name: Set LANG
-  lineinfile:
-    path: /etc/default/locale
-    regexp: '^LANG='
-    line: 'LANG="{{ locales_language }}"'
-    create: yes
-    mode: '0644'
+    - name: Set LANG
+      lineinfile:
+        path: /etc/default/locale
+        regexp: '^LANG='
+        line: 'LANG="{{ locales_language }}"'
+        create: yes
+        mode: '0644'
 
-- name: Set LANGUAGE
-  lineinfile:
-    path: /etc/default/locale
-    regexp: '^LANGUAGE='
-    line: 'LANGUAGE="{{ locales_language }}"'
+    - name: Set LANGUAGE
+      lineinfile:
+        path: /etc/default/locale
+        regexp: '^LANGUAGE='
+        line: 'LANGUAGE="{{ locales_language }}"'
 
-- name: Set LC_TIME
-  lineinfile:
-    path: /etc/default/locale
-    regexp: '^LC_TIME='
-    line: 'LC_TIME="{{ locales_language }}"'
+    - name: Set LC_TIME
+      lineinfile:
+        path: /etc/default/locale
+        regexp: '^LC_TIME='
+        line: 'LC_TIME="{{ locales_language }}"'
 
-- name: Set LC_PAPER
-  lineinfile:
-    path: /etc/default/locale
-    regexp: '^LC_PAPER='
-    line: 'LC_PAPER="{{ locales_language }}"'
+    - name: Set LC_PAPER
+      lineinfile:
+        path: /etc/default/locale
+        regexp: '^LC_PAPER='
+        line: 'LC_PAPER="{{ locales_language }}"'
 
-- name: Set LC_MEASUREMENT
-  lineinfile:
-    path: /etc/default/locale
-    regexp: '^LC_MEASUREMENT='
-    line: 'LC_MEASUREMENT="{{ locales_language }}"'
+    - name: Set LC_MEASUREMENT
+      lineinfile:
+        path: /etc/default/locale
+        regexp: '^LC_MEASUREMENT='
+        line: 'LC_MEASUREMENT="{{ locales_language }}"'
+  when: ansible_facts['os_family'] == "Debian"
+
+- name: Debug info
+  debug:
+    msg: "Skipping cfg_network: unsupported OS '{{ ansible_os_family }}'"
+  when: ansible_os_family != "Debian"

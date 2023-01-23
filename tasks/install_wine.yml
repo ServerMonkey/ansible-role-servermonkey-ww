@@ -24,78 +24,78 @@
       - fonts-wine
       - winetricks
 
-- name: Create Wine prefixes
-  shell: |
-    PATH_WIN32="$HOME/.wine_win32"
-    PATH_WIN64="$HOME/.wine_win64"
-    if [ ! -d "$PATH_WIN32" ]; then
-        WINEPREFIX="$PATH_WIN32" \
-        WINEARCH=win32 \
-        winecfg >/dev/null 2>&1
-    fi
-    if [ ! -d "$PATH_WIN64" ]; then
-        WINEPREFIX="$PATH_WIN64" \
-        WINEARCH=win64 \
-        winecfg >/dev/null 2>&1
-    fi
-  register: install_wine_prefixes
-  failed_when: install_wine_prefixes.stdout != "" or install_wine_prefixes.stderr != ""
-  changed_when: install_wine_prefixes.stdout != ""
-  become_user: '{{ wine_user }}'
-
-- name: Create prefix script for win32
-  blockinfile:
-    path: '/opt/wineglas-win32'
-    create: yes
-    mode: 0755
-    block: |
-      #!/bin/sh
-      TO_EXPORT='export WINEPREFIX="$HOME/.wine_win32"'
-      echo "$TO_EXPORT" >"$HOME/.current_wineprefix.cfg"
-      echo "wineprefix set to: .wine_win32"
-
-- name: Link prefix script for win32
-  file:
-    src: '/opt/wineglas-win32'
-    dest: '/usr/local/bin/wineglas-win32'
-    state: link
-
-- name: Create prefix script for win64
-  blockinfile:
-    path: '/opt/wineglas-win64'
-    create: yes
-    mode: 0755
-    block: |
-      #!/bin/sh
-      TO_EXPORT='export WINEPREFIX="$HOME/.wine_win64"'
-      echo "$TO_EXPORT" >"$HOME/.current_wineprefix.cfg"
-      echo "wineprefix set to: .wine_win64"
-
-- name: Link prefix script for win64
-  file:
-    src: '/opt/wineglas-win64'
-    dest: '/usr/local/bin/wineglas-win64'
-    state: link
-
-- name: Create a winetricks-autosetup script
-  blockinfile:
-    path: '/opt/winetricks-autosetup'
-    create: yes
-    mode: 0755
-    block: |
-      #!/bin/sh
-      export WINEPREFIX="$HOME/.wine_win32
-      echo "### win64 setup ###
-      winetricks -q dotnet35
-      echo "Done!"
-
-      export WINEPREFIX="$HOME/.wine_win64
-      echo "### win64 setup ###
-      winetricks -q dotnet35
-      echo "Done!"
-
-- name: Link winetricks-autosetup script
-  file:
-    src: '/opt/winetricks-autosetup'
-    dest: '/usr/local/bin/winetricks-autosetup'
-    state: link
+#- name: Create Wine prefixes
+#  shell: |
+#    PATH_WIN32="$HOME/.wine_win32"
+#    PATH_WIN64="$HOME/.wine_win64"
+#    if [ ! -d "$PATH_WIN32" ]; then
+#        WINEPREFIX="$PATH_WIN32" \
+#        WINEARCH=win32 \
+#        winecfg >/dev/null 2>&1
+#    fi
+#    if [ ! -d "$PATH_WIN64" ]; then
+#        WINEPREFIX="$PATH_WIN64" \
+#        WINEARCH=win64 \
+#        winecfg >/dev/null 2>&1
+#    fi
+#  register: install_wine_prefixes
+#  failed_when: install_wine_prefixes.stdout != "" or install_wine_prefixes.stderr != ""
+#  changed_when: install_wine_prefixes.stdout != ""
+#  become_user: '{{ current_user }}'
+#
+#- name: Create prefix script for win32
+#  blockinfile:
+#    path: '/opt/wineglas-win32'
+#    create: yes
+#    mode: 0755
+#    block: |
+#      #!/bin/sh
+#      TO_EXPORT='export WINEPREFIX="$HOME/.wine_win32"'
+#      echo "$TO_EXPORT" >"$HOME/.current_wineprefix.cfg"
+#      echo "wineprefix set to: .wine_win32"
+#
+#- name: Link prefix script for win32
+#  file:
+#    src: '/opt/wineglas-win32'
+#    dest: '/usr/local/bin/wineglas-win32'
+#    state: link
+#
+#- name: Create prefix script for win64
+#  blockinfile:
+#    path: '/opt/wineglas-win64'
+#    create: yes
+#    mode: 0755
+#    block: |
+#      #!/bin/sh
+#      TO_EXPORT='export WINEPREFIX="$HOME/.wine_win64"'
+#      echo "$TO_EXPORT" >"$HOME/.current_wineprefix.cfg"
+#      echo "wineprefix set to: .wine_win64"
+#
+#- name: Link prefix script for win64
+#  file:
+#    src: '/opt/wineglas-win64'
+#    dest: '/usr/local/bin/wineglas-win64'
+#    state: link
+#
+#- name: Create a winetricks-autosetup script
+#  blockinfile:
+#    path: '/opt/winetricks-autosetup'
+#    create: yes
+#    mode: 0755
+#    block: |
+#      #!/bin/sh
+#      export WINEPREFIX="$HOME/.wine_win32
+#      echo "### win64 setup ###
+#      winetricks -q dotnet35
+#      echo "Done!"
+#
+#      export WINEPREFIX="$HOME/.wine_win64
+#      echo "### win64 setup ###
+#      winetricks -q dotnet35
+#      echo "Done!"
+#
+#- name: Link winetricks-autosetup script
+#  file:
+#    src: '/opt/winetricks-autosetup'
+#    dest: '/usr/local/bin/winetricks-autosetup'
+#    state: link

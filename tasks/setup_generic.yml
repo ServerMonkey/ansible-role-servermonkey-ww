@@ -1,20 +1,26 @@
 ---
-#info: Generic installation, use as a baseline, latest upgrades (reqires Internet)
+#info: Generic installation, use as a baseline, latest upgrades (requires Internet)
 #info: , Good to run before any other major task
 - include_role: name=servermonkey.ww
   vars:
     task: '{{ loop_setup_generic }}'
+  loop_control:
+    loop_var: loop_setup_generic
   loop:
+    - info_test
+    - info_test-become
+    - cfg_network
     - cfg_apt
+    - cfg_bash
+    - cfg_dis-beep
+    - cfg_dis-me
     - do_upgrade
     - cfg_ntp
     - install_base
     - cfg_hostname
     - cfg_locales
-    - cfg_grub-faster
+    - cfg_boot-faster
     - cfg_auto-upgrades
-  loop_control:
-    loop_var: loop_setup_generic
 
 - include_role: name=servermonkey.ww
   vars:

@@ -1,5 +1,0 @@
----
-#info: Return a message to the local terminal
-- name: debug message
-  debug:
-    msg: This is just a message test

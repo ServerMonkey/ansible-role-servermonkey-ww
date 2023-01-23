@@ -1,0 +1,20 @@
+---
+#info: Add Servermonkeys key and repo to the APT sources list
+- name: Download ServerMonkeys GPG key
+  get_url:
+    url: https://github.com/ServerMonkey.gpg
+    dest: /tmp/repo-dev_at_muspekaren.se.gpg
+    checksum: sha256:654068a47f03b62d02fcb3bc7accfc896ffe4f836d3f82668041c34ec7da4817
+
+- name: Import key to keyring
+  shell: cat /tmp/repo-dev_at_muspekaren.se.gpg | gpg --dearmor | tee /usr/share/keyrings/repo-dev_at_muspekaren.se.gpg >/dev/null
+  changed_when: false
+
+- name: Add source repository into sources list
+  apt_repository:
+    repo: "deb [signed-by=/usr/share/keyrings/repo-dev_at_muspekaren.se.gpg] https://muspekaren.se/repo-debian ./"
+    state: present
+
+- name: Update APT cache
+  apt:
+    update_cache: yes

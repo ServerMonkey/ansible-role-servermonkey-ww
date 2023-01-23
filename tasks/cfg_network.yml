@@ -1,0 +1,43 @@
+---
+#info: Basic network configuration, set DNS
+- block:
+    - name: Activate DHCP on all network devices
+      shell: |
+        if echo $(ip -br a) | grep -q "DOWN"; then
+            dhclient
+        else
+            echo "No need"
+        fi
+      register: shell_cfg_network_dhcp
+      changed_when: "shell_cfg_network_dhcp.stdout != 'No need'"
+
+    - name: Autoenable DHCP on all network devices
+      blockinfile:
+        path: /etc/network/interfaces
+        marker: '# {mark} - ETHERNET'
+        block: |
+          # Auto configure all
+          auto /e*=eth
+          allow-hotplug eth
+          iface eth inet dhcp
+      when: "shell_cfg_network_dhcp.stdout != 'No need'"
+
+    - name: Set primary DNS servers
+      lineinfile:
+        path: /etc/dhcp/dhclient.conf
+        regexp: 'prepend domain-name-servers'
+        line: prepend domain-name-servers {{ im_dns }};
+      register: lineinfile_cfg_network_dhcp_dns
+      when: im_dns is defined
+
+    - name: Renew DHCP for all network devices
+      shell: dhclient
+      changed_when: lineinfile_cfg_network_dhcp_dns.changed
+  when: ansible_os_family == "Debian"
+
+- name: Debug info
+  debug:
+    msg: "Skipping cfg_network: unsupported OS '{{ ansible_os_family }}'"
+  when: ansible_os_family != "Debian"
+
+#todo: if needed, implement this: https://www.tp-link.com/us/support/faq/840/

@@ -6,3 +6,4 @@
     update_cache: yes
     dpkg_options: 'force-confold,force-confdef'
     autoremove: yes
+  when: do_upgrade

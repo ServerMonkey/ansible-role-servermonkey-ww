@@ -1,9 +1,19 @@
 ---
-#info: Add a normal user and group to the OS
+#info: Add a human user and groups
+#https://wiki.debian.org/SystemGroups
 - name: Add user '{{ current_user }}'
-  shell: "adduser --gecos '' {{ current_user }} || true"
-  changed_when: false
+  user:
+    name: '{{ current_user }}'
+    password: "{{ current_pass | password_hash('sha512') }}"
+    shell: /bin/bash
 
-- name: Change password for user '{{ current_user }}'
-  shell: "echo '{{ current_user }}:{{ current_pass }}' | chpasswd"
-  changed_when: false
+- name: Add users group '{{ current_user }}'
+  group:
+    name: '{{ current_user }}'
+    state: present
+
+- name: Add user '{{ current_user }}' to groups
+  user:
+    name: '{{ current_user }}'
+    groups: '{{ current_user }},{{ current_groups }}'
+    append: yes

@@ -4,7 +4,7 @@
 # change resolution if this is a VM, good for testing
 SYSTEM_IS_VM=$(hostnamectl status | grep Virt)
 if [ -n "${SYSTEM_IS_VM}" ]; then
-    xrandr -s 1440x900
+    xrandr -s 1280x720
 fi
 
 # example

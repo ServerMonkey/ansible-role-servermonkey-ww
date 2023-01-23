@@ -1,0 +1,16 @@
+---
+#info: Disable TPM in Linux Kernel, helpful on really old hardware
+- name: Blacklist TPM
+  kernel_blacklist:
+    name: '{{ loop_cfg_dis_tpm }}'
+    state: present
+  loop:
+    - tpm
+    - tpm_tis
+  loop_control:
+    loop_var: loop_cfg_dis_tpm
+  register: blacklist_cfg_dis_tpm
+
+- name: Make Blacklist persistent  # noqa 503
+  command: update-initramfs -u
+  when: blacklist_cfg_dis_tpm.changed

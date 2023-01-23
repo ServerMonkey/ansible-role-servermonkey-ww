@@ -1,7 +1,6 @@
 ---
 #info: Install Wordpress with postfix and nginx on Debian 10,11
 # based on https://www.rosehosting.com/blog/how-to-install-wordpress-with-nginx-on-debian-10/
-
 - name: Install required software
   package:
     update_cache: yes
@@ -30,6 +29,8 @@
 - name: find PHP config file
   shell: php -i | grep 'Loaded Conf' | sed -n 's/^.*=> //p'
   register: phpcfg
+  failed_when: phpcfg.stdout == ""
+  changed_when: false
 
 - name: find PHP service name number
   shell: |
@@ -37,6 +38,8 @@
     awk -F  '/php/' '{print $2}' | \
     awk -F '/cli/' '{print $1}'
   register: phpver
+  failed_when: phpver.stdout == ""
+  changed_when: false
 
 - name: php.ini set post_max_size
   lineinfile:
@@ -72,10 +75,12 @@
   service:
     name: 'php{{ phpver.stdout }}-fpm'
     state: restarted
+  changed_when: false
 
 - name: Set login_file location
   stat: path=/root/wordpress_sql_login.txt
   register: login_file
+  changed_when: false
 
 - name: First time Wordpress setup
   block:
@@ -86,14 +91,16 @@
       script: 'wordpress-sql.sh {{ setup_wordpress_sql_db }} {{ setup_wordpress_sql_user  }} {{ wp_sql_pass }}'
 
     - name: Install Wordpress
-      unarchive:
-        src: '{{ ww_fastpkg_bandwagon }}web/wordpress_5.8.zip'
-        dest: '{{ setup_wordpress_www_root }}'
+      include_role: name=servermonkey.fastpkg
+      vars:
+        fpkg_package: wordpress
+        fpkg_install_dir: '{{ setup_wordpress_dir }}'
 
     - name: Copy Wordpress config
       copy:
         src: '{{ setup_wordpress_dir }}wp-config-sample.php'
         dest: '{{ setup_wordpress_cfg }}'
+        force: no
         remote_src: yes
         mode: 0640
 
@@ -125,17 +132,27 @@
         path: '{{ setup_wordpress_dir }}wp-content/plugins/akismet'
         state: absent
 
+    - include_role: name=servermonkey.fastpkg
+      vars:
+        fpkg_package: '{{ loop_setup_cnocomp_fastpkg }}'
+        fpkg_only_download: true
+      loop_control:
+        loop_var: loop_setup_cnocomp_fastpkg
+      loop:
+        - wordpress-plugin-*
+        - wordpress-theme-*
+
     - name: Install all Wordpress Plugins
       unarchive:
         src: '{{ item }}'
         dest: '{{ setup_wordpress_dir }}wp-content/plugins/'
-      with_fileglob: '{{ ww_fastpkg_bandwagon }}web/wordpress-plugin*.zip'
+      with_fileglob: '{{ ww_fastpkg_downloads }}wordpress-plugin*.zip'
 
     - name: Install all Wordpress Themes
       unarchive:
         src: '{{ item }}'
         dest: '{{ setup_wordpress_dir }}wp-content/themes/'
-      with_fileglob: '{{ ww_fastpkg_bandwagon }}web/wordpress-theme*.zip'
+      with_fileglob: '/{{ ww_fastpkg_downloads }}wordpress-theme*.zip'
 
   when: login_file.stat.exists == false
 
@@ -204,16 +221,16 @@
   service:
     name: 'nginx'
     state: restarted
+  changed_when: false
 
 - name: Restart PHP service
   service:
     name: 'php{{ phpver.stdout }}-fpm'
     state: restarted
+  changed_when: false
 
 - name: Show SQL password location
   include_role: name=servermonkey.ww_logger
   vars:
     ww_msg: 'SQL password is in: /root/wordpress_sql_login.txt'
     ww_logfile: servermonkey.ww_setup_wordpress
-
-# todo: add wp-cli

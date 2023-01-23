@@ -8,3 +8,4 @@
   vars:
     sh: '{{ this_task_file }}'
     sh_arg: local
+    sh_nolog: true

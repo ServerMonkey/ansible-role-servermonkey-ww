@@ -1,0 +1,162 @@
+---
+#info: Change the default desktop and GRUB theme
+- name: Set facts
+  set_fact:
+    cfg_theme_path_base: '/usr/share/desktop-base/{{ cfg_theme_name }}/'
+
+- name: Set facts
+  set_fact:
+    # lockscreen
+    cfg_theme_path_lock: '{{ cfg_theme_path_base }}lockscreen/'
+    # wallpaper
+    cfg_theme_path_wall: '{{ cfg_theme_path_base }}wallpaper/'
+    # gnome
+    cfg_theme_file_gnome: 'gnome-background.xml'
+
+- name: Set facts
+  set_fact:
+    # wallpaper
+    cfg_theme_wall: '{{ cfg_theme_path_wall }}{{ cfg_theme_wall_img | basename }}'
+    # gnome
+    cfg_theme_gnomewall: '{{ cfg_theme_path_wall }}{{ cfg_theme_file_gnome }}'
+    cfg_theme_gnomelock: '{{ cfg_theme_path_lock }}{{ cfg_theme_file_gnome }}'
+    # grub
+    cfg_theme_grubwall: '{{ cfg_theme_path_wall }}wallpaper-grub.png'
+    cfg_theme_path_grub: '{{ cfg_theme_path_base }}grub/'
+
+- name: Create theme directories for wallpaper
+  file:
+    path: '{{ cfg_theme_path_wall }}'
+    state: directory
+    mode: '0755'
+    recurse: yes
+
+- name: Create theme directories for GRUB
+  file:
+    path: '{{ cfg_theme_path_grub }}'
+    state: directory
+    mode: '0755'
+    recurse: yes
+
+- name: Create theme directories
+  file:
+    path: '{{ cfg_theme_path_lock }}'
+    state: directory
+    mode: '0755'
+    recurse: yes
+
+# WALLPAPER
+- name: Link wallpaper to theme
+  file:
+    src: '{{ cfg_theme_wall_img }}'
+    dest: '{{ cfg_theme_wall }}'
+    state: link
+    force: yes
+    follow: no
+
+- name: Set desktop-background
+  alternatives:
+    name: desktop-background
+    path: '{{ cfg_theme_wall }}'
+
+- name: Set desktop-login-background
+  alternatives:
+    name: desktop-login-background
+    path: '{{ cfg_theme_wall }}'
+
+# GNOME
+- name: Config gnome-background.xml
+  blockinfile:
+    path: '{{ cfg_theme_gnomewall }}'
+    create: yes
+    block: |
+      <background>
+        <static>
+          <duration>8640000.0</duration>
+          <file>
+            <size width="1920" height="1080">{{ cfg_theme_wall }}</size>
+          </file>
+        </static>
+      </background>
+
+- name: Link gnome-wallpaper to gnome-lockscreen
+  file:
+    src: '{{ cfg_theme_gnomewall }}'
+    dest: '{{ cfg_theme_gnomelock }}'
+    state: link
+
+# THEME
+- name: Set desktop-theme
+  alternatives:
+    name: desktop-theme
+    path: '{{ cfg_theme_path_base }}'
+
+# PLYMOUTH
+- name: Link plymouth
+  file:
+    src: '../../plymouth/themes/debian-theme'
+    dest: '{{ cfg_theme_path_base }}plymouth'
+    state: link
+    force: yes
+    follow: no
+
+# GRUB
+- name: Config grub wallpaper
+  blockinfile:
+    path: '{{ cfg_theme_path_grub }}grub_background.sh'
+    create: yes
+    block: |
+      WALLPAPER={{ cfg_theme_grubwall }}
+      COLOR_NORMAL=white/black
+      COLOR_HIGHLIGHT=black/white
+  when: cfg_theme_grub_png
+
+- name: Link wallpaper to grub
+  file:
+    src: '{{ cfg_theme_grub_png }}'
+    dest: '{{ cfg_theme_grubwall }}'
+    state: link
+    force: yes
+    follow: no
+  register: changed_cfg_theme_grub_link
+  when: cfg_theme_grub_png
+
+- name: Set desktop-grub
+  alternatives:
+    name: desktop-grub
+    path: "{{ cfg_theme_grubwall }}"
+  register: changed_cfg_theme_grub
+  when: cfg_theme_grub_png
+
+- name: Disable grub wallpaper
+  blockinfile:
+    path: /etc/grub.d/99_servermonkey-color
+    create: yes
+    mode: 0755
+    block: |
+      set_background_image ""
+      echo "set menu_color_normal={{ cfg_theme_grub_color }}"
+      echo "set menu_color_highlight={{ cfg_theme_grub_color_hl }}"
+      echo "set color_normal={{ cfg_theme_grub_color }}"
+      echo "set color_highlight={{ cfg_theme_grub_color_hl }}"
+  register: changed_cfg_theme_grub_color
+  when: cfg_theme_grub_png == false
+
+- name: Delete old config
+  file:
+    state: absent
+    path: /etc/grub.d/99_servermonkey-color
+  when: cfg_theme_grub_png
+
+- name: Update grub
+  shell: update-grub
+  register: shell_cfg_theme_grub
+  when:
+    changed_cfg_theme_grub.changed
+    or changed_cfg_theme_grub_link.changed
+    or changed_cfg_theme_grub_color.changed
+
+- name: Debug
+  debug:
+    msg: '{{ shell_cfg_theme_grub }}'
+  when: servermonkey_debug

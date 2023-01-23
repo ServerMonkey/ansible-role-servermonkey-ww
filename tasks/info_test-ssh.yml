@@ -1,12 +1,27 @@
 ---
-#info: Fast check for an open SSH port
-- block:
-    - name: Check network connection
-      command: nc -z -w5 {{ inventory_hostname }} 22
-      connection: local
+#info: Check for an open SSH port on 'ansible_host' (IP not hostname)
+#info: , show error on failure, ignore if successful
+- name: Run ipmitool
+  connection: local
+  shell: nc -z -w5 {{ ansible_host }} 22 || echo 'Failed to find SSH on port 22'
+  register: shell
+  async: 60
+  poll: 0
+  throttle: 20
+  become: false
+  failed_when: false
 
-  rescue:
-    - include_role: name=servermonkey.ww_logger
-      vars:
-        ww_msg: Unreachable via SSH
-        ww_logfile: servermonkey.ww_info_test-ssh
+- name: Check on an async task
+  connection: local
+  async_status:
+    jid: '{{ shell.ansible_job_id }}'
+  register: job
+  until: job.finished
+  retries: 1000
+  delay: 3
+  become: false
+
+- include_role: name=servermonkey.ww_logger
+  vars:
+    ww_msg: '{{ job.stdout }}'
+    ww_logfile: 'servermonkey.ww_info_test-ssh-inverse'

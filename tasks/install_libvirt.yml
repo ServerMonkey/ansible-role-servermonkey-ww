@@ -5,12 +5,19 @@
     update_cache: yes
     name:
       - qemu-kvm
-      - libvirt-clients
+      - libvirt-clients  # will install lvm2, ignore lvmconfig failed errors, fixed after reboot
       - libvirt-daemon-system
       - virt-manager
       - bridge-utils
       - vagrant-libvirt
       - python3-lxml  # let's Ansible modify VM's XML configs, for KVM configs
+
+- name: Add user '{{ current_user }}' to libvirt
+  user:
+    name: '{{ current_user }}'
+    groups: libvirt
+    append: yes
+  when: install_libvirt_allow_current_user
 
 - name: Set libvirt default connect URI
   lineinfile:
@@ -22,3 +29,5 @@
     virsh net-autostart default
     virsh net-start default || true
   changed_when: false
+
+#todo: find out why "lvmcinfig" faile during installation, install each package separate

@@ -1,4 +1,5 @@
 #!/bin/sh
-#info: Clear the dmesg buffer
+#info: Clear the kernel buffer
+#autoroot
 
 dmesg -C

@@ -1,0 +1,7 @@
+---
+#info: Backup current user home folder to .ww/upload
+- name: 'Backup for user: {{ current_user }}'
+  include_role: name=servermonkey.rfetch
+  vars:
+    rfetch_src: '/home/{{ current_user }}'
+    rfetch_des: '{{ ww }}upload'

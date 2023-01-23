@@ -1,12 +1,31 @@
 ---
-#info: Upgrade the hardware's firmware, like UEFI or SSD, requires internet
-- name: Install firmware update daemon
-  package:
-    update_cache: yes
-    name: fwupd  # for UEFI and SSD fw-upgrades
+#info: Upgrade the hardware's firmware, requires internet, skips on VMs
+- name: Upgrade firmware
+  block:
+    - name: Install firmware update daemon
+      package:
+        update_cache: yes
+        name: fwupd  # for UEFI and SSD fw-upgrades
 
-- name: Update firmware over internet
-  shell: |
-    fwupdmgr get-updates -y || true
-    fwupdmgr update -y --no-reboot-check || true
-  changed_when: false
+    - name: Download firmware over internet
+      shell: fwupdmgr get-updates -y 2>&1 || true
+      register: shell_do_upgrade_fw_get
+      when: ansible_virtualization_role == 'host'
+      changed_when: '"Successfully downloaded" in shell_do_upgrade_fw_get.stdout_lines'
+
+    - name: Debug
+      debug:
+        msg: '{{ shell_do_upgrade_fw_get }}'
+      when: servermonkey_debug
+
+    - name: Upgrade firmware
+      shell: fwupdmgr update -y --no-reboot-check 2>&1
+      register: shell_do_upgrade_fw_update
+      changed_when: '"Successfully installed" in shell_do_upgrade_fw_update.stdout_lines'
+      when: '"Successfully downloaded" in shell_do_upgrade_fw_get.stdout_lines'
+
+    - name: Debug
+      debug:
+        msg: '{{ shell_do_upgrade_fw_update }}'
+      when: servermonkey_debug
+  when: ansible_virtualization_role == 'host' and do_upgrade_fw

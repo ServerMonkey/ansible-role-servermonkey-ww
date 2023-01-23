@@ -1,5 +1,5 @@
 ---
-#info: Same as cfg_apt, also enable experimental repo
+#info: Same as cfg_apt, also enable experimental repo, for developers
 - name: Set path to script
   set_fact:
     this_task_file: '{{ role_path }}/tasks/cfg_apt.sh'
@@ -8,3 +8,4 @@
   vars:
     sh: '{{ this_task_file }}'
     sh_arg: exp
+    sh_nolog: true

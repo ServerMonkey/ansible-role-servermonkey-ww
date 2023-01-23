@@ -1,5 +1,6 @@
 #!/bin/sh
 #info: Remove .ssh folders for root and all users with a home directory
+#autoroot
 
 # must run as root
 if [ "$(id -u)" -ne 0 ]; then

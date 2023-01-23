@@ -1,7 +1,8 @@
 ---
-#info: Enable automatic security upgrades, Debian 10,11
+#info: Enable automatic security upgrades and reboot, Debian 10,11
 - include_role:
     name: geerlingguy.security
     tasks_from: autoupdate-Debian
   vars:
-    security_autoupdate_reboot: "true"
+    security_autoupdate_reboot: true
+  when: cfg_auto_upgrades

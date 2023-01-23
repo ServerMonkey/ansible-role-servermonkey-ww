@@ -1,10 +1,14 @@
-# undefined variables, please define with set_fact or in playbook
-# current_user
-# current_pass
+# undefined variable, please define with set_fact or in playbook
+#current_pass
+current_user: '{{ ansible_user }}'
+current_groups: ''
 
 # generic
-ww_fastpkg_bandwagon: "{{ lookup('env','HOME') }}/.fastpkg/packages/bandwagon/"
 ww_timezone: 'Europe/Stockholm'
+ww_fastpkg_downloads: '/var/lib/fastpkg/downloads/'
+ww_vm_res_x: 1280
+ww_vm_res_y: 720
+servermonkey_debug: false  # devs only
 
 # cfg_autologin
 lightdm_cfg: '/etc/lightdm/lightdm.conf'
@@ -13,25 +17,82 @@ lightdm_cfg: '/etc/lightdm/lightdm.conf'
 locales_keyboard: 'se'
 locales_language: 'en_US.UTF-8'
 
+# cfg_dis-beep
+cfg_dis_beep: true
+
+# cfg_dis-me
+cfg_dis_me: true
+
+# cfg_boot-faster
+cfg_boot_faster_grub_timeout: 1
+
 # cfg_ntp
 cfg_ntp_timezone: '{{ ww_timezone }}'
+cfg_auto_upgrades: true
+
+# cfg_theme
+# set cfg_theme_grub_png to false to disable wallpaper in grub
+# alt: '/usr/share/desktop-base/moonlight-theme/grub/grub-4x3.png'
+cfg_theme_grub_png: false
+cfg_theme_wall_img: '/usr/share/desktop-base/moonlight-theme/wallpaper/contents/images/1920x1080.svg'
+cfg_theme_name: 'servermonkey-theme'
+cfg_theme_grub_color: 'light-gray/black'
+cfg_theme_grub_color_hl: 'black/light-gray'
+
+# do_linux_live_kit
+do_linux_live_driver_pack: true  # set to true for most HW compatible distro
+do_linux_live_archive: false  # archive and upload to host
+
+# do_ping
+do_ping_target: 'localhost'
+
+# do_upgrade
+do_upgrade: true  # upgrade the OS
+
+# do_upgrade-fw
+do_upgrade_fw: true  # upgrade the firmware
+
+# cfg_xfce
+cfg_xfce_config: xfce4-theme-default
+
+# cfg_xfce-plank
+cfg_xfce_plank_config: xfce4-theme-plank-default
+cfg_xfce_plank_theme: plank-themes
+cfg_xfce_plank_dock: plank-dock-default
 
 # cfg_raspberry-pi
 pi_cfg: '/boot/firmware/config.txt'
 disable_bt: false
 disable_wifi: false
 
-# do_backup-home
-backup_tmp: '/tmp/{{ inventory_hostname }}_home-backup.tar.bz2'
+# install_base
+install_base_extras: false  # admin tools for active administration
+install_base_all_firmware: false  # install all firmware, use on linux-live-kit
 
-# install_wine
-wine_user: '{{ ansible_user }}'
+# install_desktop
+install_desktop_minimal: false  # set to false for kiosk and minimal desktops
+
+# install_libvirt
+install_libvirt_allow_current_user: false  # add the current user to the libvirt group
+
+# install_nginx
+install_nginx_site_name: 'helloworld'
+install_nginx_cfg_src: 'nginx_generic.conf'
+install_nginx_default_server: false  # for single hosted websites set to true
+
+# install_xfce
+install_xfce_full: false  # includes libreoffice, large package
+install_xfce_extras: false  # custom desktop configuration tools
+install_xfce_volume: true  # reset volume on new session
+install_xfce_volume_default: 75  # default desktop volume, in percente
 
 # setup_kiosk
+kiosk_hide_mouse: true
+kiosk_autologin: true
 kiosk_user: 'kiosk'
 kiosk_pass: 'kiosk'
 kiosk_script: 'example-kiosk.sh'
-kiosk_chromium_ver: '*'
+kiosk_chromium_ver: '*'  # set this to 'false' to not install chromium
 kiosk_chromium_ver_arm: '90.0.4430.212-1'  # because of a bug on Raspberry Pi
 openbox_autostart: '/etc/xdg/openbox/autostart'
 
@@ -44,3 +105,7 @@ setup_wordpress_nginx_cfg_src: 'nginx_wordpress.conf'
 setup_wordpress_nginx_cfg: '/etc/nginx/sites-available/wordpress.conf'
 setup_wordpress_sql_db: 'wpdb'
 setup_wordpress_sql_user: 'wpadmin'
+
+# install_wildwest
+install_wildwest_developer: false  # if you want to develop the wildwest toolset itself
+install_wildwest_sysadmin: false  # HPILO and IPMI tools, some tools won't work without a Desktop OS

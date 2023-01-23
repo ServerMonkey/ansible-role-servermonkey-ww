@@ -1,11 +1,49 @@
 ---
 #info: Set hostname to Ansible inventory hostname
-- name: Set hostname in /etc/hostname
-  hostname:
-    name: '{{ inventory_hostname }}'
+- name: Get hostname from FQDN
+  set_fact:
+    cfg_hostname_short: '{{ inventory_hostname.split(".")[0] }}'
 
-- name: Set hostname in /etc/hosts
-  lineinfile:
-    path: /etc/hosts
-    regexp: '^127.0.1.1'
-    line: '127.0.1.1 {{ inventory_hostname }}'
+# posix
+- block:
+    - name: Set hostname in /etc/hostname
+      hostname:
+        name: '{{ cfg_hostname_short }}'
+
+    - name: Set hostname in /etc/hosts
+      lineinfile:
+        path: /etc/hosts
+        regexp: '^127.0.1.1'
+        line: '127.0.1.1 {{ cfg_hostname_short }}'
+  when: ansible_os_family == 'Debian'
+
+# windows
+- block:
+# this will be done automatically on reboot
+#    - name: Set hostname (Logonserver)
+#      shell: regtool set '\HKEY_CURRENT_USER\Volatile Environment\LOGONSERVER' "\\\{{ cfg_hostname_short|upper }}"
+
+    - name: Set hostname (AltDefaultDomain)
+      shell: regtool set '\HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\AltDefaultDomainName' "{{ cfg_hostname_short|upper }}"
+
+    - name: Set hostname (DefaultDomain)
+      shell: regtool set '\HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\DefaultDomainName' "{{ cfg_hostname_short|upper }}"
+
+    - name: Set hostname (ActiveComputerName)
+      shell: regtool set '\HKLM\SYSTEM\CurrentControlSet\Control\ComputerName\ActiveComputerName\ComputerName' "{{ cfg_hostname_short|upper }}"
+
+    - name: Set hostname (ComputerName)
+      shell: regtool set '\HKLM\SYSTEM\CurrentControlSet\Control\ComputerName\ComputerName' "{{ cfg_hostname_short|upper }}"
+
+    - name: Set hostname (Lanman)
+      shell: regtool set '\HKLM\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters\srvcomment' "{{ cfg_hostname_short }}"
+
+    - name: Set hostname (Eventlog)
+      shell: regtool set '\HKLM\SYSTEM\CurrentControlSet\Services\Eventlog\ComputerName' "{{ cfg_hostname_short|upper }}"
+
+    - name: Set hostname (Tcpip)
+      shell: regtool set '\HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Hostname' "{{ cfg_hostname_short }}"
+
+    - name: Set hostname (Tcpip NV)
+      shell: regtool set '\HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\NV Hostname' "{{ cfg_hostname_short }}"
+  when: '"CYGWIN" in ansible_os_family'

@@ -11,8 +11,7 @@ Alternatively you can use plain Ansible but need to define some variables at run
 
 Tasks and scripts are sorted in different groups. Each prefix represents a group.
 
-* **cfg_** = System configurations, usually when you first setup a new system
-* **demo_** = Example scripts, use as development reference
+* **cfg_** = System configurations, usually when you first set up a new system
 * **do_** = Everyday generic system administration tools
 * **info_** = Just collect information about a system, no active administration
 * **install_** = Install software or groups of software

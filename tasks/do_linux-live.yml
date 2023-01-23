@@ -1,0 +1,42 @@
+---
+#info: Create a live distro from a Linux installation
+- name: Build image
+  shell: /tmp/linux-live-kit/build || exit 1
+  register: shell_do_linux_live_kit_build
+
+- debug:
+    msg: '{{ shell_do_linux_live_kit_build.stdout_lines }}'
+  when: shell_do_linux_live_kit_build
+
+- name: Archive distro
+  block:
+    - name: Archive to ZIP
+      shell: |
+        /tmp/gen_linux_zip.sh || exit 1
+      register: shell_do_linux_live_kit_pack_zip
+
+    - debug:
+        msg: '{{ shell_do_linux_live_kit_pack_zip.stdout_lines }}'
+      when: shell_do_linux_live_kit_pack_zip
+
+    - name: Archive to ISO
+      shell: |
+        /tmp/gen_linux_iso.sh || exit 1
+      register: shell_do_linux_live_kit_pack_iso
+
+    - debug:
+        msg: '{{ shell_do_linux_live_kit_pack_iso.stdout_lines }}'
+      when: shell_do_linux_live_kit_pack_iso
+
+    - name: Upload zip
+      fetch:
+        src: /tmp/linux-x86_64.zip
+        dest: '{{ ww }}upload'
+      changed_when: false
+
+    - name: Upload iso
+      fetch:
+        src: /tmp/linux-x86_64.iso
+        dest: '{{ ww }}upload'
+      changed_when: false
+  when: do_linux_live_archive

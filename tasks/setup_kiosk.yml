@@ -4,12 +4,13 @@
   set_fact:
     current_user: '{{ kiosk_user }}'
     current_pass: '{{ kiosk_pass }}'
+  when: kiosk_autologin
 
 # need specific version, because of a bug on Raspberry Pi hardware
 - name: Set specific Chromium version on ARM
   set_fact:
     kiosk_chromium_ver: '{{ kiosk_chromium_ver_arm }}'
-  when: '"RASPIROOT" in ansible_cmdline.root'
+  when: '"RASPIROOT" in ansible_cmdline.root and kiosk_chromium_ver != false'
 
 - name: Install minmal Openbox desktop
   package:
@@ -18,10 +19,16 @@
       - xorg
       - lightdm
       - openbox
+      - hsetroot  # change background color or wallpaper
       - picom
       - unclutter
+
+- name: Install Chromium
+  package:
+    name:
       - chromium-common={{ kiosk_chromium_ver }}
       - chromium={{ kiosk_chromium_ver }}
+  when: kiosk_chromium_ver != false
 
 # need to disable Chromium updates, because of a bug on Raspberry Pi hardware
 - name: Disable updates for chromium on ARM
@@ -40,6 +47,14 @@
   loop:
     - cfg_adduser
     - cfg_autologin
+  when: kiosk_autologin
+
+- include_role: name=servermonkey.ww
+  vars:
+    task: '{{ item }}'
+  loop:
+    - install_slick-greeter
+  when: kiosk_autologin == false
 
 #- name: Make all Desktop applications start maximized
 #  xml:
@@ -83,15 +98,21 @@
   lineinfile:
     path: '{{ openbox_autostart }}'
     line: unclutter &
+  when: kiosk_hide_mouse
 
 - name: Install kiosk script
   copy:
     src: '{{ kiosk_script }}'
-    dest: '/opt/{{ kiosk_script }}'
+    dest: '/opt/{{ kiosk_script | basename }}'
     mode: '+x'
 
 - name: Autostart kiosk script and log to ~kiosk.log
   lineinfile:
     path: '{{ openbox_autostart }}'
-    regexp: '^/opt/*'
-    line: 'sh -lc /opt/{{ kiosk_script }} >> /home/{{ current_user }}/kiosk.log 2>&1'
+    regexp: 'kiosk.log'
+    line: 'sh -lc /opt/{{ kiosk_script | basename }} >>"$HOME/.kiosk.log" 2>&1'
+
+- name: Remove old kiosk logs
+  file:
+    path: '/home/kiosk/.kiosk.log'
+    state: absent
