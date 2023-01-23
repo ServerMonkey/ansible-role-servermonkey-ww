@@ -1,0 +1,8 @@
+---
+#info: Packages that improve security analysis for sysadmins
+- name: Install basic sysadmin security analysis tools
+  package:
+    update_cache: yes
+    name:
+      - debsecan  # find CVEs
+      - needrestart  # check for running outdated binaries

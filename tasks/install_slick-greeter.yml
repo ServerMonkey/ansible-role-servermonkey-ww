@@ -1,0 +1,15 @@
+---
+#info: Install and configure slick-greeter
+- name: Install slick-greeter
+  package:
+    update_cache: yes
+    name:
+      - slick-greeter
+
+- name: Register lightdm sessions script
+  stat: path=/usr/share/xsessions/lightdm-xsession.desktop
+  register: setup_cnocomp_xsession_old
+
+- name: Disable lightdm sessions script
+  command: mv /usr/share/xsessions/lightdm-xsession.desktop /usr/share/xsessions/lightdm-xsession.desktop_disabled
+  when: setup_cnocomp_xsession_old.stat.exists

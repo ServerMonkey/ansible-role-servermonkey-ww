@@ -1,0 +1,37 @@
+---
+#info: Install a generic office workstation system
+- name: Set facts
+  set_fact:
+    current_user: worker
+    current_pass: worker
+    ww_upgrade_os: false
+    install_base_extras: true
+    install_xfce_full: true
+
+- include_role: name=servermonkey.ww
+  vars:
+    task: '{{ loop_setup_ws_pkgs }}'
+  loop_control:
+    loop_var: loop_setup_ws_pkgs
+  loop:
+    - setup_generic
+    - cfg_adduser
+    - do_upgrade-fw
+    - install_xfce
+    - cfg_xfce
+    - install_flatpak
+    - install_desktop
+
+- name: Extra wallpapers
+  package:
+    name:
+      - ukui-wallpapers
+      - gnome-backgrounds
+
+- include_role: name=servermonkey.fastpkg
+  vars:
+    fpkg_package: '{{ loop_setup_ws_wall }}'
+  loop_control:
+    loop_var: loop_setup_ws_wall
+  loop:
+    - wallpaper-*

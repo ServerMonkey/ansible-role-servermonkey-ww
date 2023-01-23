@@ -1,0 +1,16 @@
+---
+#info: On XFCE user session, autostart Discord (flatpak)
+- name: Autostart Discord
+  blockinfile:
+    path: '/home/{{ current_user }}/.config/autostart/discord.desktop'
+    create: yes
+    block: |
+      [Desktop Entry]
+      Version=1.0
+      Name=Discord
+      Comment=All-in-one voice and text chat for gamers
+      Type=Application
+      Exec=/usr/bin/flatpak run --env=TZ=America/New_York --branch=stable --arch=x86_64 --command=discord com.discordapp.Discord --start-minimized
+      Terminal=false
+      StartupNotify=false
+  become_user: '{{ current_user }}'

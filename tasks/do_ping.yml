@@ -1,0 +1,21 @@
+---
+#info: Simple ping, one try (cygwin comp)
+- block:
+    - name: Ping
+      shell: |
+        TARGET="{{ do_ping_target }}"
+        # windows
+        if [ -n "$(command -v systeminfo)" ]; then
+            ping "$TARGET" count 1 || exit 1
+        # posix
+        else
+            ping -c1 "$TARGET" -q || exit 1
+        fi
+      register: do_ping_shell
+
+#todo impove this, don't fail, better error output
+  rescue:
+    - include_role: name=servermonkey.ww_logger
+      vars:
+        ww_msg: "Failed to ping {{ do_ping_target }}"
+        ww_logfile: do_ping_shells_{{ do_ping_target }}

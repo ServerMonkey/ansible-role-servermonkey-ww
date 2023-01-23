@@ -1,0 +1,35 @@
+---
+#info: Install 'wildwest' toolset for testing, administration or development
+#info: Requires cfg_apt-servermonkey or similar internal repo
+#info: If you need ipmiview/IKVM to work, also run e.g. install_desktop
+- name: Install ww packages
+  package:
+    update_cache: yes
+    name:
+      - ansible-coll-servermonkey-ww
+      - ansible-role-servermonkey-sh
+      - ansible-role-servermonkey-ww
+      - ansible-role-servermonkey-ww-logger
+      - inventorymaker
+      - wildwest
+
+- name: Install ww sysadmin packages
+  package:
+    name:
+      - hpilo-perl-control
+      - ipmiview  # requires a desktop OS for some IKVM to work
+      - ansible-role-servermonkey-hpilo
+      - ansible-role-servermonkey-hpilo-runner
+      - ansible-role-servermonkey-ipmi
+      - ansible-role-servermonkey-ipmi-runner
+      - usbprep
+      - ova2qcow
+  when: install_wildwest_sysadmin
+
+- name: Install ww development packages
+  package:
+    name:
+      - ansible-role2deb
+      - ccze-test
+      - monkeyrepo
+  when: install_wildwest_developer

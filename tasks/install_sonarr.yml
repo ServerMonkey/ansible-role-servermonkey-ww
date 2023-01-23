@@ -1,0 +1,28 @@
+---
+#info: Add sonarr.tv key, APT and install
+# based on: https://sonarr.tv/#downloads-v3-linux-debian
+- name: Download sonarr.tv GPG key from keyserver.ubuntu.com
+  get_url:
+    url: "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x2009837cbffd68f45bc180471f4f90de2a9b4bf8"
+    dest: /tmp/repo-sonarr.tv.gpg
+    checksum: sha256:33ada2c6765d25bec692dcb13b707a1b3b98d8cb43dfa697dbf1af3ed313a2eb
+
+- name: Import key to keyring
+  shell: cat /tmp/repo-sonarr.tv.gpg | gpg --dearmor | tee /usr/share/keyrings/repo-sonarr.tv.gpg >/dev/null
+  changed_when: false
+
+- name: Add source repository into sources list
+  apt_repository:
+    repo: "deb [signed-by=/usr/share/keyrings/repo-sonarr.tv.gpg] https://apt.sonarr.tv/debian buster main"
+    state: present
+
+- name: Install Sonarr packages
+  package:
+    update_cache: yes
+    name:
+      - sonarr
+
+- name: Start sonarr service  # default port: http://*:8989/
+  service:
+    name: 'sonarr'
+    state: started

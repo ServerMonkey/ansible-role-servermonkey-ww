@@ -1,0 +1,28 @@
+---
+#info: Add jellyfin.org key, APT and install
+# based on: https://jellyfin.org/downloads
+- name: Download jellyfin.org GPG key
+  get_url:
+    url: https://repo.jellyfin.org/ubuntu/jellyfin_team.gpg.key
+    dest: /tmp/repo-jellyfin.org.gpg
+    checksum: sha256:a0cde241ae297fa6f0265c0bf15ce9eb9ee97c008904a59ab367a67d59532839
+
+- name: Import key to keyring
+  shell: cat /tmp/repo-jellyfin.org.gpg | gpg --dearmor | tee /usr/share/keyrings/repo-jellyfin.org.gpg >/dev/null
+  changed_when: false
+
+- name: Add source repository into sources list
+  apt_repository:
+    repo: "deb [signed-by=/usr/share/keyrings/repo-jellyfin.org.gpg] https://repo.jellyfin.org/debian bullseye main"
+    state: present
+
+- name: Install Jellyfin packages
+  package:
+    update_cache: yes
+    name:
+      - jellyfin
+
+- name: Start jellyfin service  # default port: http://*:8069/
+  service:
+    name: 'jellyfin'
+    state: started

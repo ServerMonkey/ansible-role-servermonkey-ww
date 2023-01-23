@@ -1,0 +1,27 @@
+---
+#info: Check for an open SSH port on 'ansible_host' (IP not hostname)
+#info: , show OK if successful, ignore errors
+- name: Run ipmitool
+  connection: local
+  shell: nc -z -w5 {{ ansible_host }} 22 && echo OK
+  register: shell
+  async: 60
+  poll: 0
+  throttle: 20
+  become: false
+  failed_when: false
+
+- name: Check on an async task
+  connection: local
+  async_status:
+    jid: '{{ shell.ansible_job_id }}'
+  register: job
+  until: job.finished
+  retries: 1000
+  delay: 3
+  become: false
+
+- include_role: name=servermonkey.ww_logger
+  vars:
+    ww_msg: '{{ job.stdout }}'
+    ww_logfile: 'servermonkey.ww_info_test-ssh-inverse'

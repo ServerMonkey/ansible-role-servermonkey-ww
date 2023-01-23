@@ -1,0 +1,6 @@
+---
+#info: Create an empty /etc/motd file
+- name: Create empty /etc/motd file
+  copy:
+    content: ""
+    dest: /etc/motd

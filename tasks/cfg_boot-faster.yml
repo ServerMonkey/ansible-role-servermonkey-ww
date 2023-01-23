@@ -1,0 +1,34 @@
+---
+#info: Make OS boot faster
+- block:
+    - name: Disable GRUB timeout on VMs
+      set_fact:
+        cfg_boot_faster_grub_timeout: "0"
+      when: ansible_virtualization_role == 'guest'
+
+    - name: Configure GRUB timeout
+      lineinfile:
+        path: /etc/default/grub
+        regexp: '^GRUB_TIMEOUT='
+        line: 'GRUB_TIMEOUT={{ cfg_boot_faster_grub_timeout }}'
+      register: cfg_boot_faster_grub_timeout_line
+
+    - name: Update GRUB
+      shell: update-grub 2>/dev/null || exit 1
+      when: cfg_boot_faster_grub_timeout_line.changed
+  when: ansible_os_family == "Debian"
+
+- block:
+    - name: Check if Windows no GUI boot is set
+      shell: "grep '/noguiboot' /cygdrive/c/boot.ini"
+      register: cgf_grub_faster_shell
+      changed_when: false
+      failed_when: false
+
+    - name: Disable Windows GUI boot
+      replace:
+        path: /cygdrive/c/boot.ini
+        regexp: '/fastdetect'
+        replace: '/fastdetect /noguiboot'
+      when: cgf_grub_faster_shell.rc
+  when: "'CYGWIN' in ansible_os_family"

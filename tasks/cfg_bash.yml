@@ -1,0 +1,77 @@
+---
+#info: Improve Bash usability, add colors and longer history
+- name: Get users HOME dir
+  shell: echo $HOME
+  register: shell_cfg_bash_home
+  changed_when: false
+
+- name: Improve Bash aliases in {{ shell_cfg_bash_home.stdout }}
+  replace:
+    path: '{{ shell_cfg_bash_home.stdout }}/.bashrc'
+    regexp: '# alias'
+    replace: 'alias'
+
+- name: Improve Bash aliases in {{ shell_cfg_bash_home.stdout }}
+  replace:
+    path: '{{ shell_cfg_bash_home.stdout }}/.bashrc'
+    regexp: '#alias'
+    replace: 'alias'
+
+- name: Improve Bash aliases - fix Cygwin bug
+  replace:
+    path: '{{ shell_cfg_bash_home.stdout }}/.bashrc'
+    regexp: 'alias cd=cd_func'
+    replace: '# alias cd=cd_func'
+  when: '"CYGWIN" in ansible_os_family'
+
+- name: Improve Bash history length in {{ shell_cfg_bash_home.stdout }}
+  replace:
+    path: '{{ shell_cfg_bash_home.stdout }}/.bashrc'
+    regexp: '.*HISTSIZE=.*'
+    replace: 'HISTSIZE=5000'
+  when: current_user != "root"
+
+- name: Improve Bash history size in {{ shell_cfg_bash_home.stdout }}
+  replace:
+    path: '{{ shell_cfg_bash_home.stdout }}/.bashrc'
+    regexp: '.*HISTFILESIZE=.*'
+    replace: 'HISTFILESIZE=10000'
+  when: current_user != "root"
+
+- name: Add dates to Bash history in {{ shell_cfg_bash_home.stdout }}
+  lineinfile:
+    path: '{{ shell_cfg_bash_home.stdout }}/.bashrc'
+    insertafter: '.*HISTFILESIZE=.*'
+    regexp: '.*HISTTIMEFORMAT=.*'
+    line: 'HISTTIMEFORMAT="%d/%m/%y %T "'
+
+- name: Improve Bash aliases in /etc/skel
+  replace:
+    path: '/etc/skel/.bashrc'
+    regexp: '# alias'
+    replace: 'alias'
+
+- name: Improve Bash aliases in /etc/skel
+  replace:
+    path: '/etc/skel/.bashrc'
+    regexp: '#alias'
+    replace: 'alias'
+
+- name: Improve Bash history length in /etc/skel
+  replace:
+    path: '/etc/skel/.bashrc'
+    regexp: '.*HISTSIZE=.*'
+    replace: 'HISTSIZE=5000'
+
+- name: Improve Bash history size in /etc/skel
+  replace:
+    path: '/etc/skel/.bashrc'
+    regexp: '.*HISTFILESIZE=.*'
+    replace: 'HISTFILESIZE=10000'
+
+- name: Add dates to Bash history in /etc/skel
+  lineinfile:
+    path: '/etc/skel/.bashrc'
+    insertafter: '.*HISTFILESIZE=.*'
+    regexp: '.*HISTTIMEFORMAT=.*'
+    line: 'HISTTIMEFORMAT="%d/%m/%y %T "'

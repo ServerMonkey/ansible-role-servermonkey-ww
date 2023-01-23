@@ -1,0 +1,24 @@
+---
+#info: Create a live distro from a Linux installation, requirements, run first
+- name: Install required packages
+  package:
+    update_cache: yes
+    name:
+      - squashfs-tools
+      - genisoimage
+      - zip
+
+- name: Install extra driver packages
+  package:
+    name:
+      - firmware-amd-graphics  # AMD GPU drivers
+      - intel-microcode  # intel CPUs
+      - firmware-realtek  # realtek ethernet (laptops)
+      - libsensors5  # temperature sensors
+      - haveged
+  when: do_linux_live_driver_pack
+
+- include_role: name=servermonkey.fastpkg
+  vars:
+    fpkg_package: linux-live-kit
+    fpkg_install_dir: /tmp/linux-live-kit

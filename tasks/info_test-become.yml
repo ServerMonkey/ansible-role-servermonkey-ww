@@ -1,0 +1,21 @@
+---
+#info: Fail if the user is not root or admin (cygwin comp)
+- name: Test become
+  shell: |
+    if [ -n "$(command -v systeminfo)" ]; then
+        if [ "$(id -u 544)" -ne 544 ]; then
+            echo 'Must run as admin!' >&2
+            exit 1
+        fi
+    else
+        if [ "$(id -u)" -ne 0 ]; then
+            echo 'Must run as root!' >&2
+            exit 1
+        fi
+    fi
+  register: info_test_become_shell
+  failed_when: false
+
+- fail:
+    msg: "{{ info_test_become_shell.stderr }}"
+  failed_when: info_test_become_shell.rc

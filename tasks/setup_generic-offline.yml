@@ -1,0 +1,11 @@
+---
+#info: Generic installation, use as a baseline, no upgrades
+#info: , Good to run before any other major task
+- name: Set facts
+  set_fact:
+    cfg_auto_upgrades: false
+    do_upgrade: false
+
+- include_role: name=servermonkey.ww
+  vars:
+    task: setup_generic

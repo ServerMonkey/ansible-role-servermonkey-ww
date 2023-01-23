@@ -1,0 +1,98 @@
+---
+#info: Install Wordpress with postfix and nginx on Debian 10,11
+# based on https://www.rosehosting.com/blog/how-to-install-wordpress-with-nginx-on-debian-10/
+- name: Install required software
+  package:
+    update_cache: yes
+    name: nginx
+
+- name: Set facts
+  set_fact:
+    install_nginx_www_root: '/var/www/html/'
+    install_nginx_cfg_available: '/etc/nginx/sites-available/'
+    install_nginx_cfg_enabled: '/etc/nginx/sites-enabled/'
+
+- name: Set facts
+  set_fact:
+    install_nginx_cfg: '{{ install_nginx_cfg_available }}{{ install_nginx_site_name }}'
+    install_nginx_www_site_dir: '{{ install_nginx_www_root }}{{ install_nginx_site_name }}/'
+
+- name: Remove default site
+  file:
+    path: '{{ install_nginx_www_root }}index.nginx-debian.html'
+    state: absent
+
+- name: Remove Nginx default site
+  file:
+    path: '/etc/nginx/sites-enabled/default'
+    state: absent
+
+- name: Create site directory '{{ install_nginx_www_site_dir }}'
+  file:
+    path: '{{ install_nginx_www_site_dir }}'
+    state: directory
+    mode: '0755'
+
+- name: Copy website from 'nginx_{{ install_nginx_site_name }}.htm'
+  copy:
+    src: 'nginx_{{ install_nginx_site_name }}.htm'
+    dest: '{{ install_nginx_www_site_dir }}index.htm'
+    mode: 0644
+  failed_when: false
+
+- name: Set permissions for www-data
+  file:
+    path: '{{ install_nginx_www_site_dir }}'
+    owner: 'www-data'
+    group: 'www-data'
+    recurse: yes
+
+- name: Copy Nginx config '{{ install_nginx_cfg_src }}'
+  copy:
+    src: '{{ install_nginx_cfg_src }}'
+    dest: '{{ install_nginx_cfg }}'
+    mode: 0644
+
+- name: Replace tag <WEBSITE_DEFAULT_SERVER> - Main host
+  replace:
+    dest: '{{ install_nginx_cfg }}'
+    regexp: '<WEBSITE_DEFAULT_SERVER>'
+    replace: 'default_server'
+  when: install_nginx_default_server
+
+- name: Replace tag <WEBSITE_DEFAULT_SERVER> - Multi host
+  replace:
+    dest: '{{ install_nginx_cfg }}'
+    regexp: '<WEBSITE_DEFAULT_SERVER>'
+    replace: ''
+  when: install_nginx_default_server == false
+
+- name: Replace tag <WEBSITE_ROOT>
+  replace:
+    dest: '{{ install_nginx_cfg }}'
+    regexp: '<WEBSITE_ROOT>'
+    replace: '{{ install_nginx_www_site_dir }}'
+
+- name: Replace tag <WEBSITE_NAME> - Registered domain name
+  replace:
+    dest: '{{ install_nginx_cfg }}'
+    regexp: '<WEBSITE_NAME>'
+    replace: '{{ install_nginx_site_name }}'
+
+- name: Enable website '{{ install_nginx_site_name }}'
+  file:
+    src: '{{ install_nginx_cfg }}'
+    dest: '{{ install_nginx_cfg_enabled }}{{ install_nginx_site_name }}'
+    state: link
+
+- name: Verify Nginx config
+  shell: nginx -t 2>&1
+  register: shell_install_nginx_verify
+  changed_when: false
+  failed_when: '"test is successful" not in shell_install_nginx_verify.stdout'
+
+- name: Restart Nginx service
+  service:
+    name: 'nginx'
+    state: restarted
+  changed_when: false

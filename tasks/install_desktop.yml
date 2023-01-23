@@ -1,0 +1,60 @@
+---
+#info: Install generic Desktop/office packages that are not in install_xfce
+- name: Install basic Desktop packages
+  package:
+    update_cache: yes
+    name:
+      - synaptic  # package manager
+      - firefox-esr
+      - webext-ublock-origin-firefox
+      - doublecmd-common  # advanced file manager
+      - meld  # diff viewer
+      - p7zip-full
+      - geany  # better text editor
+
+- name: Set Firefox as default browser
+  shell: xdg-settings set default-web-browser firefox-esr.desktop
+  become_user: '{{ current_user }}'
+  changed_when: false
+
+- name: Install generic Desktop packages
+  package:
+    update_cache: yes
+    name:
+      - libreoffice-gtk3
+      - thunderbird
+      - quodlibet
+      - webext-privacy-badger  # stop trackers
+      - transmission-gtk  # torrents
+      - unison  # on demand file syncronisation
+      - unison-gtk
+      - syncthing  # live file syncronisation
+      - syncthing-gtk
+      - borgbackup  # backup tool
+      - vorta  # GUI for borgbackup
+      - doublecmd-help-en
+      - libffmpegthumbnailer4v5  # thumbnails in doublecmd
+      - libunrar5  # extract rar in doublecmd
+      - keepassxc  # password manager
+      - speedcrunch  # calculator
+      - filezilla  # FTP client
+      - evince  # view docs: PDF, PS, EPS, DjVu, DVI, XPS
+      - catfish  # search files
+      - gpick  # pick colors
+      - ristretto  # image viewer
+      - converseen  # batch image converter
+      - flameshot  # better screenshot tool
+      - persepolis  # download manager
+      - pidgin  # chat application
+  when: not install_desktop_minimal
+
+- name: Detect PC type
+  shell: dmidecode --string chassis-type
+  register: shell_install_desktop_pc_type
+  changed_when: false
+
+- name: Install network-manager on Notebooks
+  package:
+    name:
+      - network-manager-gnome  # let users manage networks, like WIFI
+  when: 'not install_desktop_minimal and shell_install_desktop_pc_type.stdout == "Notebook"'

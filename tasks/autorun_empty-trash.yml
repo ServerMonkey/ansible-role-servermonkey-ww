@@ -1,0 +1,16 @@
+---
+#info: On XFCE user session, empty the trash folder
+- name: Autostart trash-empty
+  blockinfile:
+    path: '/home/{{ current_user }}/.config/autostart/empty-trash.desktop'
+    create: yes
+    block: |
+      [Desktop Entry]
+      Version=1.0
+      Name=Empty Trash
+      Comment=Remove files from trash
+      Type=Application
+      Exec=trash-empty
+      Terminal=false
+      StartupNotify=false
+  become_user: '{{ current_user }}'
