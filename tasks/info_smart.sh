@@ -12,6 +12,12 @@ PARAMETER="critical"
 
 ###### INIT ###################################################################
 
+# windows
+if [ -n "$(command -v systeminfo)" ]; then
+    echo "Windows is not supported" >&2
+    exit 1
+fi
+
 # must run as root
 if [ "$(id -u)" -ne 0 ]; then
     echo 'This script must be run as root!' >&2
@@ -491,6 +497,9 @@ main() {
         # Ceph node
         elif echo "$i*" | grep -q "rbd"; then
             check_ceph "/dev/$i"
+        # Virtual disk
+        elif echo "$i*" | grep -q "vda"; then
+            :
         # Unknown
         else
             echo "$i Warning: Unknown disk format." \

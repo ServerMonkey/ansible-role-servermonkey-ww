@@ -1,0 +1,23 @@
+---
+#info: Cleanup unseless files to give more disk space
+- block:
+    - name: Remove unused packages
+      package:
+        autoremove: yes
+
+    - name: Check if flatpak is installed
+      shell: apt list flatpak 2>/dev/null
+      register: shell_do_cleanup_flatpak_installed
+      changed_when: false
+
+    - name: Remove unused flatpaks
+      shell: flatpak uninstall --unused
+      register: shell_do_cleanup_flatpak
+      changed_when: '"Nothing unused" not in shell_do_cleanup_flatpak.stdout'
+      when: "'installed' in shell_do_cleanup_flatpak_installed.stdout_lines"
+
+    - name: Clean APT cache
+      shell: apt-get clean
+      args:
+        warn: false
+  when: ansible_os_family == "Debian"

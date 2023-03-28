@@ -1,4 +1,4 @@
-# undefined variable, please define with set_fact or in playbook
+# undefined variable, define with set_fact or in playbook vars
 #current_pass
 current_user: '{{ ansible_user }}'
 current_groups: ''
@@ -10,6 +10,9 @@ ww_vm_res_x: 1280
 ww_vm_res_y: 720
 servermonkey_debug: false  # devs only
 
+# cfg_apt
+cfg_apt_repos: default  # enable additional apt repos
+
 # cfg_autologin
 lightdm_cfg: '/etc/lightdm/lightdm.conf'
 
@@ -17,16 +20,17 @@ lightdm_cfg: '/etc/lightdm/lightdm.conf'
 locales_keyboard: 'se'
 locales_language: 'en_US.UTF-8'
 
-# cfg_dis-beep
+# cfg_dis-beep  # disables PC speaker 'beep' in kernel
 cfg_dis_beep: true
 
-# cfg_dis-me
+# cfg_dis-me  # disables Intel Management Engine in kernel
 cfg_dis_me: true
 
 # cfg_boot-faster
 cfg_boot_faster_grub_timeout: 1
 
 # cfg_ntp
+cfg_ntp: true  # false will copletely skip NTP installation and setup
 cfg_ntp_timezone: '{{ ww_timezone }}'
 cfg_auto_upgrades: true
 
@@ -92,6 +96,7 @@ kiosk_autologin: true
 kiosk_user: 'kiosk'
 kiosk_pass: 'kiosk'
 kiosk_script: 'example-kiosk.sh'
+kiosk_browser: 'simple-kiosk'  # fallback browser is chromium if 'kiosk_browser' package is not found, set to 'false' to skip intstallation
 kiosk_chromium_ver: '*'  # set this to 'false' to not install chromium
 kiosk_chromium_ver_arm: '90.0.4430.212-1'  # because of a bug on Raspberry Pi
 openbox_autostart: '/etc/xdg/openbox/autostart'

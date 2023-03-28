@@ -2,6 +2,16 @@
 #info: Show the CPUs virtualization capabilities
 #autoroot
 
+if [ -z "$(command -v dmesg)" ]; then
+    echo "top is not installed. Install to make this script work." >&2
+    exit 1
+fi
+
+if [ -z "$(command -v lscpu)" ]; then
+    echo "lscpu is not installed. Install to make this script work." >&2
+    exit 1
+fi
+
 TEST_AES=$(grep -m1 -o aes /proc/cpuinfo)
 TEST_IOMMU=$(dmesg | grep DMAR:)
 TEST_VIRT=$(lscpu | grep Virtualization: | awk '{print $2}')

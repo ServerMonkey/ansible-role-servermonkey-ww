@@ -1,6 +1,12 @@
 #!/bin/sh
 #info: List remove block devices, like USB flashstorage
 
+# windows
+if [ -n "$(command -v systeminfo)" ]; then
+    echo "Windows is not supported" >&2
+    exit 1
+fi
+
 # get list of removabe devices
 USBKEYS=$(
     grep -Hv ^0$ /sys/block/*/removable |

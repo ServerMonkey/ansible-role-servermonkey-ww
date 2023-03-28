@@ -1,0 +1,10 @@
+---
+#info: Let each Ansible host ping all other Ansible hosts via DNS name
+#info: . Show result for all hosts
+- include_role: name=servermonkey.ww
+  vars:
+    task: do_ping-verbose
+    do_ping_target: "{{ env_setup_ping_targets }}"
+  loop_control:
+    loop_var: env_setup_ping_targets
+  loop: "{{ ansible_play_hosts }}"

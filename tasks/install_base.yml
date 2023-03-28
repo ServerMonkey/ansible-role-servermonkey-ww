@@ -1,96 +1,105 @@
 ---
 #info: Packages that should exist on every system
 #info: . Use 'nvidia-detect' to install NVIDIA GPUs later on
-- name: Install basic sysadmin and Ansible tools
-  package:
-    update_cache: yes
-    name:
-      - console-setup  # to set keyboard layout
-      - smartmontools  # for disk health monitoring
-      - jq  # for disk health monitoring script
-      - python3-lxml  # let's Ansible modify XML configs
-      - iperf3  # for bandwith testing
-      - hdparm  # hdd speed test
-      - wget
-      - gpg  # for adding APT repos
+- block:
+    - name: Install basic sysadmin and Ansible tools
+      package:
+        update_cache: yes
+        name:
+          - console-setup  # to set keyboard layout
+          - smartmontools  # for disk health monitoring
+          - python3-lxml  # let's Ansible modify XML configs
+          - hdparm  # hdd speed test
+          - wget
+          - gpg  # for adding APT repos
+          - pciutils  # has lspci, required for detect-gpu.sh
 
-- name: Install basic tools (Debian)
-  package:
-    name:
-      - locales  # to set language and locales
+    - name: Install basic tools (Debian)
+      package:
+        name:
+          - jq  # for disk health monitoring script, not available in Kali offline
+      when: ansible_distribution != "Kali"
+
+    - name: Install basic tools (Debian)
+      package:
+        name:
+          - locales  # to set language and locales
+
+    - block:
+        - name: Detect PC type
+          shell: dmidecode --string chassis-type
+          register: shell_install_base_pc_type
+          changed_when: false
+
+        - name: Install task-laptop on Notebooks
+          package:
+            name:
+              - task-laptop
+          when: 'shell_install_base_pc_type.stdout == "Notebook"'
+      when: ansible_virtualization_role == 'host'
+
+    - name: Check for urandom warnings
+      shell: grep -i 'urandom warning(s) missed due to ratelimiting' /var/log/kern.log
+      register: base_urandom_warning
+      failed_when: false
+      changed_when: false
+
+    - name: Install haveged due to urandom warnings
+      package:
+        name:
+          - haveged
+      when: base_urandom_warning.stdout != "" or install_base_all_firmware
+
+    - name: Install Intel CPU microcode
+      package:
+        update_cache: yes
+        name:
+          - intel-microcode
+      # only install microcode on real hardware, not VMs
+      when: '"GenuineIntel" in ansible_processor and ansible_virtualization_role == "host" or install_base_all_firmware'
+
+    - name: Detect GPU
+      script: detect-gpu.sh
+      register: base_detect_gpu
+      failed_when: '"Failed" in base_detect_gpu.stdout'
+      changed_when: false
+
+    - name: Install AMD GPU driver
+      package:
+        name:
+          - firmware-amd-graphics
+      when: '"AMD" in base_detect_gpu.stdout or install_base_all_firmware'
+
+    - name: Install nvidia-detect
+      package:
+        name:
+          - nvidia-detect
+      when: '"NVIDIA" in base_detect_gpu.stdout'
+
+    - name: Install additional cli tools
+      package:
+        update_cache: yes
+        name:
+          - iperf3  # for bandwith testing
+          - mutt  # read and manage system mail
+          - ccze  # colorize shell output
+          - apt-xapian-index  # search packages with 'axi-cache search ...'
+          - apt-file  # search for files in apt cache
+          - tldr  # simplified man pages
+          - dtrx  # better archive manager
+          - ncdu  # disk usage
+          - trash-cli  # trash utility
+          - locate  # find files fast, a file indexter
+          - tree  # tree directory
+          - curl  # alternative to wget
+          - visidata  # table editor
+          - iftop  # display bandwidth usage
+          - ipcalc  # IPv4 Netmask/broadcast/etc calculator
+          - rsync  # sync files
+          - hwinfo  # easier to find hw info
+          - htop  # better than top
+          - psmisc  # pstree
+          - minicom  # serial communication
+          - debconf-utils  # has debconf-get-selections
+      when: install_base_extras
   when: ansible_os_family == "Debian"
-
-- name: Detect PC type
-  shell: dmidecode --string chassis-type
-  register: shell_install_base_pc_type
-  changed_when: false
-
-- name: Install task-laptop on Notebooks
-  package:
-    name:
-      - task-laptop
-  when: 'shell_install_base_pc_type.stdout == "Notebook"'
-
-- name: Check for urandom warnings
-  shell: grep -i 'urandom warning(s) missed due to ratelimiting' /var/log/kern.log
-  register: base_urandom_warning
-  failed_when: false
-  changed_when: false
-
-- name: Install haveged due to urandom warnings
-  package:
-    name:
-      - haveged
-  when: base_urandom_warning.stdout != "" or install_base_all_firmware
-
-- name: Install Intel CPU microcode
-  package:
-    update_cache: yes
-    name:
-      - intel-microcode
-  # only install microcode on real hardware, not VMs
-  when: '"GenuineIntel" in ansible_processor and ansible_virtualization_role == "host" or install_base_all_firmware'
-
-- name: Detect GPU
-  script: detect-gpu.sh
-  register: base_detect_gpu
-  failed_when: '"Failed" in base_detect_gpu.stdout'
-  changed_when: false
-
-- name: Install AMD GPU driver
-  package:
-    name:
-      - firmware-amd-graphics
-  when: '"AMD" in base_detect_gpu.stdout or install_base_all_firmware'
-
-- name: Install nvidia-detect
-  package:
-    name:
-      - nvidia-detect
-  when: '"NVIDIA" in base_detect_gpu.stdout'
-
-- name: Install additional cli tools
-  package:
-    update_cache: yes
-    name:
-      - mutt  # read and manage system mail
-      - ccze  # colorize shell output
-      - apt-xapian-index  # search packages with 'axi-cache search ...'
-      - apt-file  # search for files in apt cache
-      - tldr  # simplified man pages
-      - dtrx  # better archive manager
-      - ncdu  # disk usage
-      - trash-cli  # trash utility
-      - locate  # find files fast, a file indexter
-      - tree  # tree directory
-      - curl  # alternative to wget
-      - visidata  # table editor
-      - iftop  # display bandwidth usage
-      - ipcalc  # IPv4 Netmask/broadcast/etc calculator
-      - rsync  # sync files
-      - hwinfo  # easier to find hw info
-      - htop  # better than top
-      - psmisc  # pstree
-      - minicom  # serial communication
-      - debconf-utils  # has debconf-get-selections
-  when: install_base_extras

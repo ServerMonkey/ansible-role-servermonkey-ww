@@ -20,15 +20,28 @@
       - lightdm
       - openbox
       - hsetroot  # change background color or wallpaper
-      - picom
       - unclutter
 
-- name: Install Chromium
+- name: Install picom
   package:
+    update_cache: yes
     name:
-      - chromium-common={{ kiosk_chromium_ver }}
-      - chromium={{ kiosk_chromium_ver }}
-  when: kiosk_chromium_ver != false
+      - picom
+  when: ansible_virtualization_role == 'host'
+
+- name: Install kiosk browser
+  block:
+    - name: Install simple-kiosk
+      package:
+        name:
+          - simple-kiosk
+  rescue:
+    - name: Install Chromium
+      package:
+        name:
+          - chromium-common={{ kiosk_chromium_ver }}
+          - chromium={{ kiosk_chromium_ver }}
+  when: kiosk_browser
 
 # need to disable Chromium updates, because of a bug on Raspberry Pi hardware
 - name: Disable updates for chromium on ARM
@@ -40,6 +53,7 @@
   apt:
     name: rsyslog
     state: absent
+  when: '"RASPIROOT" in ansible_cmdline.root'
 
 - include_role: name=servermonkey.ww
   vars:

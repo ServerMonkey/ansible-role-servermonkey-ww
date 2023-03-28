@@ -15,6 +15,7 @@
     fi
   register: info_test_become_shell
   failed_when: false
+  changed_when: false
 
 - fail:
     msg: "{{ info_test_become_shell.stderr }}"

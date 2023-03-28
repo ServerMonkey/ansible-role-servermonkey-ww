@@ -1,6 +1,6 @@
 ---
-#info: Generic installation, use as a baseline, latest upgrades (requires Internet)
-#info: , Good to run before any other major task
+#info: Generic installation, use as a baseline
+#info: , Good to run before any other major task like 'setup_' or 'install_'
 - include_role: name=servermonkey.ww
   vars:
     task: '{{ loop_setup_generic }}'
@@ -10,7 +10,7 @@
     - info_test
     - info_test-become
     - cfg_network
-    - cfg_apt
+    - 'cfg_apt-{{ cfg_apt_repos }}'
     - cfg_bash
     - cfg_dis-beep
     - cfg_dis-me
@@ -24,5 +24,16 @@
 
 - include_role: name=servermonkey.ww
   vars:
-    task: cfg_raspberry-pi
-  when: '"RASPIROOT" in ansible_cmdline.root'
+    task: '{{ loop_setup_generic_vms }}'
+  loop_control:
+    loop_var: loop_setup_generic_vms
+  loop:
+    - cfg_screensaver-disable
+  when: ansible_virtualization_role == 'guest'
+
+- block:
+    - include_role: name=servermonkey.ww
+      vars:
+        task: cfg_raspberry-pi
+      when: '"RASPIROOT" in ansible_cmdline.root'
+  when: '"CYGWIN" not in ansible_os_family'

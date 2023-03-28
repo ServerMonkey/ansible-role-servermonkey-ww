@@ -1,5 +1,6 @@
 ---
-#info: Same as cfg_apt, also enable expermintal and local repo, for developers
+#info: Same as cfg_apt, only enable local mounted CD-ROM (CD/DVD/BR) repo for offline use
+#info: . Automatically mounts CD-ROM and adds to fstab
 - name: Set path to script
   set_fact:
     this_task_file: '{{ role_path }}/tasks/cfg_apt.sh'

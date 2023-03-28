@@ -1,7 +1,8 @@
-#!/bin/bash
-#info: Shutdown system (cygwin comp)
+#!/bin/sh
+#info: Remove .ssh folders for root and all users with a home directory
 #autoroot
 
+# detect if windows or posix and if user is root
 # windows
 if [ -n "$(command -v systeminfo)" ]; then
     # must run as build in admin
@@ -9,7 +10,6 @@ if [ -n "$(command -v systeminfo)" ]; then
         echo 'This script must be run as admin!' >&2
         exit 1
     fi
-    sh -c "shutdown -s -t 3"
 # posix
 else
     # must run as root
@@ -17,5 +17,11 @@ else
         echo 'This script must be run as root!' >&2
         exit 1
     fi
-    sh -c "sleep 3 && shutdown -h now" &
 fi
+
+USERS="/home/*"
+for i in $USERS; do
+    rm -rf "$i"/.ssh
+done
+
+rm -rf /root/.ssh

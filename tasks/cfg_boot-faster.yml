@@ -16,7 +16,7 @@
     - name: Update GRUB
       shell: update-grub 2>/dev/null || exit 1
       when: cfg_boot_faster_grub_timeout_line.changed
-  when: ansible_os_family == "Debian"
+  when: ansible_os_family == "Debian" and ansible_virtualization_type != "lxc"
 
 - block:
     - name: Check if Windows no GUI boot is set
@@ -30,5 +30,6 @@
         path: /cygdrive/c/boot.ini
         regexp: '/fastdetect'
         replace: '/fastdetect /noguiboot'
+        mode: '0770'
       when: cgf_grub_faster_shell.rc
   when: "'CYGWIN' in ansible_os_family"

@@ -1,0 +1,30 @@
+---
+#info: Generate a new system SID, only for Windows hosts without SYSPREP
+#info: , works on NT 4, 2000, XP and Server 2003
+- block:
+    - name: Get hostname from FQDN
+      set_fact:
+        cfg_new_sid_hostname_short: '{{ inventory_hostname.split(".")[0] }}'
+
+    - include_role: name=servermonkey.fastpkg
+      vars:
+        fpkg_package: newsid
+
+    - name: Set new SID
+      shell: |
+        if ! [ -f /etc/has_new_sid ]; then
+          regtool add "\HKCU\Software\Sysinternals" || exit 1
+          regtool add "\HKCU\Software\Sysinternals\NewSID" || exit 1
+          regtool set "\HKCU\Software\Sysinternals\NewSID\EulaAccepted" 1 || exit 1
+          /cygdrive/c/opt/newsid_4.1/newsid.exe /a /n {{ cfg_new_sid_hostname_short }} || exit 1
+          touch /etc/has_new_sid
+        else
+          echo "already new SID" 
+        fi
+      register: cfg_new_sid_shell
+      changed_when: "'already new SID' not in cfg_new_sid_shell.stdout"
+
+    - debug:
+        msg: "{{ cfg_new_sid_shell.stdout }}"
+      when: cfg_new_sid_shell.stdout
+  when: '"CYGWIN" in ansible_os_family'

@@ -18,7 +18,11 @@ if [ -n "$(command -v systeminfo)" ]; then
 # posix
 else
     ip -br a | sed "/^lo.*/d"
-    grep "nameserver" /etc/resolv.conf
+    if [ -f "/etc/resolv.conf" ]; then
+        grep "nameserver" /etc/resolv.conf
+    else
+        echo "nameserver unset"
+    fi
     # list services
     echo "service ports:"
     ss -tulpn | grep LISTEN | sed 's/ *$//'

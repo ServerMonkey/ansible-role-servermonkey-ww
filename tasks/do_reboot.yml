@@ -1,0 +1,14 @@
+---
+#info: Reboot system and wait for a connection (cygwin comp)
+- name: Reboot (Windows)
+  shell: "sh -c 'shutdown -r -t 0'"
+  when: '"CYGWIN" in ansible_os_family'
+  async: 1
+  poll: 0
+
+- name: Reboot (Posix)
+  shell: "sh -c 'shutdown -r now'"
+  when: ansible_os_family == 'Debian'
+  become: true
+  async: 1
+  poll: 0

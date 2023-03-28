@@ -1,9 +1,16 @@
 ---
 #info: Check for an open SSH port on 'ansible_host' (IP not hostname)
 #info: , show OK if successful, ignore errors
-- name: Run ipmitool
+- set_fact:
+    info_test_ssh_current_host: "{{ ansible_host }}"
+
+- name: Test port 22 (portscan)
   connection: local
-  shell: nc -z -w5 {{ ansible_host }} 22 && echo OK
+  vars:
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+  shell: |
+    nc -z -w5 {{ info_test_ssh_current_host }} 22 &&
+    echo OK
   register: shell
   async: 60
   poll: 0
@@ -13,6 +20,8 @@
 
 - name: Check on an async task
   connection: local
+  vars:
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
   async_status:
     jid: '{{ shell.ansible_job_id }}'
   register: job

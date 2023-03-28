@@ -4,10 +4,10 @@
   package:
     update_cache: yes
     name:
-      - qemu-kvm
+      - qemu-kvm  # base hypervisor
       - libvirt-clients  # will install lvm2, ignore lvmconfig failed errors, fixed after reboot
-      - libvirt-daemon-system
-      - virt-manager
+      - libvirt-daemon-system  # autostart hypervisor as system service
+      - virt-manager  # GUI manager
       - bridge-utils
       - vagrant-libvirt
       - python3-lxml  # let's Ansible modify VM's XML configs, for KVM configs

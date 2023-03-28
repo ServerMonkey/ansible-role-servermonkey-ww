@@ -1,7 +1,7 @@
 ---
 #info: Install 'wildwest' toolset for testing, administration or development
-#info: Requires cfg_apt-servermonkey or similar internal repo
-#info: If you need ipmiview/IKVM to work, also run e.g. install_desktop
+#info: . Requires cfg_apt-servermonkey or similar internal repo
+#info: . If you need ipmiview/IKVM to work, also run e.g. install_desktop
 - name: Install ww packages
   package:
     update_cache: yes
@@ -29,7 +29,5 @@
 - name: Install ww development packages
   package:
     name:
-      - ansible-role2deb
-      - ccze-test
-      - monkeyrepo
+      - servermonkeys-devtools
   when: install_wildwest_developer

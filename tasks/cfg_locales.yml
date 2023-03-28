@@ -75,8 +75,3 @@
         regexp: '^LC_MEASUREMENT='
         line: 'LC_MEASUREMENT="{{ locales_language }}"'
   when: ansible_facts['os_family'] == "Debian"
-
-- name: Debug info
-  debug:
-    msg: "Skipping cfg_network: unsupported OS '{{ ansible_os_family }}'"
-  when: ansible_os_family != "Debian"

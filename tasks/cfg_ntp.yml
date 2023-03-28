@@ -4,3 +4,4 @@
     name: geerlingguy.ntp
   vars:
     ntp_timezone: '{{ cfg_ntp_timezone }}'
+  when: cfg_ntp

@@ -2,6 +2,17 @@
 #info: Show OpenGL and Vulkan information
 #autoroot
 
+# alt with error
+# windows
+if [ -n "$(command -v systeminfo)" ]; then
+    echo "Windows is not supported" >&2
+    exit 1
+# posix must run as root
+elif [ "$(id -u)" -ne 0 ]; then
+    echo 'This script must be run as root!' >&2
+    exit 1
+fi
+
 echo "[DISPLAYS]"
 DISPLAYS=$(ps a | grep Xorg | grep -v grep | awk '{print $6}')
 if [ -n "$DISPLAYS" ]; then
@@ -43,18 +54,22 @@ echo "[Vulkan driver]"
 
 # folder does not exist
 if [ -d "/usr/share/vulkan/icd.d/" ]; then
-	VULKAN_DRIVERS=$(find /usr/share/vulkan/icd.d/*x86_64.json)
-	for i in $VULKAN_DRIVERS; do
-		if echo "$i" | grep -q "lvp_icd"; then
-			echo "Lavapipe (software acceleration)"
-		elif echo "$i" | grep -q "intel_icd"; then
-			echo "Intel"
-		elif echo "$i" | grep -q "radeon_icd"; then
-			echo "Radeon"
-		else
-			echo "Unknown: $i"
-		fi
-	done
+	VULKAN_DRIVERS=$(find /usr/share/vulkan/icd.d/*.json 2>/dev/null)
+	if [ -n "$VULKAN_DRIVERS" ]; then
+        for i in $VULKAN_DRIVERS; do
+            if echo "$i" | grep -q "lvp_icd"; then
+                echo "Lavapipe (software acceleration)"
+            elif echo "$i" | grep -q "intel_icd"; then
+                echo "Intel"
+            elif echo "$i" | grep -q "radeon_icd"; then
+                echo "Radeon"
+            else
+                echo "Unknown: $i"
+            fi
+        done
+    else
+        echo "No 'Installable Client Driver' found"
+    fi
 else
 	echo "No 'Installable Client Driver' found"
 fi

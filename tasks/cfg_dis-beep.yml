@@ -5,7 +5,7 @@
     name: pcspkr
     state: present
   register: blacklist_cfg_dis_beep
-  when: cfg_dis_beep
+  when: cfg_dis_beep and ansible_virtualization_role == 'host'
 
 - name: Make Blacklist persistent  # noqa 503
   command: update-initramfs -u

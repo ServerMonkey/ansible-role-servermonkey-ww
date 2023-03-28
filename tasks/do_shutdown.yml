@@ -1,0 +1,16 @@
+---
+#info: Shutdown system (cygwin comp)
+- name: Shutdown (Windows)
+  shell: "sh -c 'shutdown -s -t 0'"
+  when: '"CYGWIN" in ansible_os_family'
+  async: 1
+  poll: 0
+
+- name: Shutdown (Posix)
+  shell: "sh -c 'shutdown -h now'"
+  when: ansible_os_family == 'Debian'
+  become: true
+  async: 1
+  poll: 0
+
+# actually test if sucessful after a timeout, add another do_wait-shutdown

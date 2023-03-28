@@ -1,5 +1,5 @@
 ---
-#info: Same as cfg_apt, also enable proposed repo, better for new hardware
+#info: Same as cfg_apt, also enable proposed repo, gives newer packages
 - name: Set path to script
   set_fact:
     this_task_file: '{{ role_path }}/tasks/cfg_apt.sh'

@@ -1,15 +1,36 @@
 ---
 #info: Basic network configuration, set DNS
 - block:
+    - name: Remove NetworkManager profiles
+      shell: rm -rf /etc/NetworkManager/system-connections/*
+
     - name: Activate DHCP on all network devices
       shell: |
-        if echo $(ip -br a) | grep -q "DOWN"; then
-            dhclient
-        else
+        NIC_DATA=$(ip -br a | grep ^e) || exit 1
+        NICS=$(echo "$NIC_DATA" | awk '{print $1}') || exit 1
+        for i in $NICS; do
+            STATE=$(echo "$NIC_DATA" | grep "^$i" | awk '{print $2}')
+            IP=$(echo "$NIC_DATA" | grep "^$i" | awk '{print $3}')
+            if [ "$STATE" != "UP" ]; then
+                echo "Interface '$i' state is not UP, running dhclient"
+                dhclient || exit 1
+                exit
+            elif [ "$IP" = "" ]; then
+                echo "No IP assigned to '$i', running dhclient"
+                dhclient || exit 1
+                exit
+            else
+                SKIP=true
+            fi
+        done
+        if [ "$SKIP" = true ]; then 
             echo "No need"
         fi
       register: shell_cfg_network_dhcp
       changed_when: "shell_cfg_network_dhcp.stdout != 'No need'"
+
+    - debug:
+        msg: "{{ shell_cfg_network_dhcp.stdout }}"
 
     - name: Autoenable DHCP on all network devices
       blockinfile:
@@ -30,14 +51,17 @@
       register: lineinfile_cfg_network_dhcp_dns
       when: im_dns is defined
 
-    - name: Renew DHCP for all network devices
+    - name: Renew DHCP on all network devices
       shell: dhclient
       changed_when: lineinfile_cfg_network_dhcp_dns.changed
   when: ansible_os_family == "Debian"
 
-- name: Debug info
-  debug:
-    msg: "Skipping cfg_network: unsupported OS '{{ ansible_os_family }}'"
-  when: ansible_os_family != "Debian"
+#- block:
+#    - name: Renew Windows DNS cache
+#      shell: ipconfig /flushdns || exit 1
+#
+#    - name: Renew Windows cache name table
+#      shell: nbtstat -R || exit 1
+#  when: '"CYGWIN" in ansible_os_family'
 
-#todo: if needed, implement this: https://www.tp-link.com/us/support/faq/840/
+#todo: if needed, implement this: https://www.tp-link.com/us/support/fa

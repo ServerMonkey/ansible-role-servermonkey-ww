@@ -1,5 +1,5 @@
 ---
-#info: Same as cfg_apt, also enable experimental repo, for developers
+#info: Same as cfg_apt, also enable backports and proposed, for newer hardware
 - name: Set path to script
   set_fact:
     this_task_file: '{{ role_path }}/tasks/cfg_apt.sh'
@@ -7,5 +7,5 @@
 - include_role: name=servermonkey.sh
   vars:
     sh: '{{ this_task_file }}'
-    sh_arg: exp
+    sh_arg: back,prop
     sh_nolog: true

@@ -19,6 +19,8 @@ elif echo "$GPU" | grep -q QXL; then
 	echo "QXL"
 elif echo "$GPU" | grep -q VMware; then
 	echo "VMware"
+elif echo "$GPU" | grep -q "MGA G200"; then
+	echo "Matrox"
 else
 	echo "Failed to detect GPU: $GPU"
 	echo "Please update this script"

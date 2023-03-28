@@ -2,8 +2,12 @@
 #info: List errors from the Linux kernel ring buffer, excludes false-positives
 #autoroot
 
-# must run as root
-if [ "$(id -u)" -ne 0 ]; then
+# windows
+if [ -n "$(command -v systeminfo)" ]; then
+    echo "Windows is not supported" >&2
+    exit 1
+# posix must run as root
+elif [ "$(id -u)" -ne 0 ]; then
     echo 'This script must be run as root!' >&2
     exit 1
 fi

@@ -1,5 +1,5 @@
 ---
-#info: Install Wordpress with postfix and nginx on Debian 10,11
+#info: Install nginx on Debian 10,11
 # based on https://www.rosehosting.com/blog/how-to-install-wordpress-with-nginx-on-debian-10/
 - name: Install required software
   package:

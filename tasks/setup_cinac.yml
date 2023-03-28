@@ -1,0 +1,16 @@
+---
+#info: Generic configuration for systems running in CinaC
+#info: , run after 'setup_generic...', reboot after this task (new Win SID)
+- include_role: name=servermonkey.ww
+  vars:
+    task: '{{ loop_setup_cinac }}'
+  loop_control:
+    loop_var: loop_setup_cinac
+  loop:
+    - cfg_firewall-ping-enable
+    - cfg_no-motd
+    - do_remove-sshkeys
+    - do_cleanup-apt
+    - do_cleanup-system
+    - cfg_new-sid
+    - do_reboot

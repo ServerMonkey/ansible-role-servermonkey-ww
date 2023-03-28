@@ -1,0 +1,30 @@
+---
+#info: Simple ping, one try, always return output
+- name: Ping
+  shell: |
+    CURRENT="{{ inventory_hostname }}"
+    TARGET="{{ do_ping_target }}"
+    
+    # windows
+    if [ -n "$(command -v systeminfo)" ]; then
+        RESULT=$(ping -n 1 "$TARGET" 1>/dev/null 2>/dev/null || echo "Fail")
+    # posix
+    else
+        RESULT=$(ping -c1 "$TARGET" -q 1>/dev/null 2>/dev/null || echo "Fail")
+    fi
+    
+    # show result
+    # skip localhost
+    if [ "$CURRENT" = "$TARGET" ]; then
+        :
+    elif echo "$RESULT" | grep -qx "Fail"; then
+        echo "-- FAIL --> $TARGET"
+    else
+        echo "--- OK ---> $TARGET"
+    fi
+  register: do_ping_verbose_shell
+
+- include_role: name=servermonkey.ww_logger
+  vars:
+    ww_msg: "{{ do_ping_verbose_shell.stdout | upper }}"
+    ww_logfile: do_ping_verbose_shell_{{ do_ping_target }}
