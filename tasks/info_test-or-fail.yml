@@ -1,0 +1,14 @@
+---
+#info: Test if a machine is online and gather facts, will fail
+#use: Needs to be run on newly added systems
+- block:
+    - name: Check network connection
+      wait_for_connection:
+        timeout: 5
+
+    - name: Ansible Ping
+      ping:
+
+    - name: Gather facts
+      setup:
+  become: true

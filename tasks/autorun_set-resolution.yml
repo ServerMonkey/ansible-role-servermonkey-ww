@@ -1,0 +1,39 @@
+---
+#info: Set optimal Deskop resolution for VMs on boot
+- name: Check if desktop OS
+  stat:
+    path: /etc/X11/default-display-manager
+  register: set_resolution_xorg_is_installed
+
+- block:
+    - name: Set VM resolution on user login, for all users
+      blockinfile:
+        path: '/etc/xdg/autostart/set-resolution.desktop'
+        create: yes
+        mode: 0644
+        block: |
+          [Desktop Entry]
+          Type=Application
+          Name=set-resolution
+          Comment=Set resolution
+          Exec=xrandr -s {{ ww_vm_res_x }}x{{ ww_vm_res_y }}
+
+    - name: Try to set VM resolution for current session
+      shell: |
+        FIRST_DISPLAY=$(ps a | grep Xorg | grep -v grep | head -n1 | awk '{print $6}')
+        xhost +local:
+        xrandr -s {{ ww_vm_res_x }}x{{ ww_vm_res_y }} -d "$FIRST_DISPLAY"
+      failed_when: false
+
+    - name: Set VM display-manager resolution
+      shell: |
+        DM=$(cat /etc/X11/default-display-manager) 
+        if echo "$DM" | grep -qF lightdm; then
+            sed -i "/#display-setup-script=/c\display-setup-script=xrandr -s {{ ww_vm_res_x }}x{{ ww_vm_res_y }}" /etc/lightdm/lightdm.conf
+        else
+            echo "Failed to identify display-manager: $DM"
+            echo "Please update this script"
+            exit 1
+        fi
+  when: "set_resolution_xorg_is_installed.stat.exists and ansible_virtualization_role == 'guest'"
+  become: true

@@ -1,5 +1,5 @@
 ---
-#info: Fail if the user is not root or admin (cygwin comp)
+#info: Fail if the user is not root or admin
 - name: Test become
   shell: |
     if [ -n "$(command -v systeminfo)" ]; then

@@ -73,18 +73,9 @@
       OnlyShowIn=XFCE
   when: ansible_virtualization_role == 'host'
 
-- name: Autostart set-resolution script on VMs
-  blockinfile:
-    path: '/etc/xdg/autostart/set-resolution.desktop'
-    create: yes
-    mode: 0644
-    block: |
-      [Desktop Entry]
-      Type=Application
-      Name=set-resolution
-      Comment=Set resolution
-      Exec=xrandr -s {{ ww_vm_res_x }}x{{ ww_vm_res_y }}
-      OnlyShowIn=XFCE
+- include_role: name=servermonkey.ww
+  vars:
+    task: autorun_set-resolution
   when: ansible_virtualization_role == 'guest'
 
 - name: Install set-volume script

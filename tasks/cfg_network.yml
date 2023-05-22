@@ -1,8 +1,8 @@
 ---
 #info: Basic network configuration, set DNS
 - block:
-    - name: Remove NetworkManager profiles
-      shell: rm -rf /etc/NetworkManager/system-connections/*
+#    - name: Remove NetworkManager profiles
+#      shell: rm -rf /etc/NetworkManager/system-connections/*
 
     - name: Activate DHCP on all network devices
       shell: |

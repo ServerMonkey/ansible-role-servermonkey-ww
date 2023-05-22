@@ -7,7 +7,7 @@
   loop_control:
     loop_var: loop_setup_generic
   loop:
-    - info_test
+    - info_test-or-fail
     - info_test-become
     - cfg_network
     - 'cfg_apt-{{ cfg_apt_repos }}'

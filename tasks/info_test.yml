@@ -1,12 +1,11 @@
 ---
-#info: Test if a machine is online and gather facts (cygwin comp)
+#info: Test if a machine is online and gather facts, will not fail
 #use: Needs to be run on newly added systems
 - block:
     - name: Check network connection
       wait_for_connection:
         timeout: 5
       register: info_test_error
-      become: true
 
     - name: Ansible Ping
       ping:
