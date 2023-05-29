@@ -23,8 +23,4 @@
         fi
       register: cfg_new_sid_shell
       changed_when: "'already new SID' not in cfg_new_sid_shell.stdout"
-
-    - debug:
-        msg: "{{ cfg_new_sid_shell.stdout }}"
-      when: cfg_new_sid_shell.stdout
   when: '"CYGWIN" in ansible_os_family'

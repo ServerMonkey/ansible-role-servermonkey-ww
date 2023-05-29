@@ -1,0 +1,17 @@
+---
+#info: On Windows, disables screensaver and Security Center notifications
+- shell: |
+    # Disable screensaver for current user
+    regtool set "\HKCU\Control Panel\Desktop\ScreenSaveActive" -s "0"
+    #todo:
+    # Windows 7, Windows 8, and Windows 10
+    # https://www.tenforums.com/tutorials/118541-enable-disable-screen-saver-windows.html
+    #regtool set "\HKCU\Software\Policies\Microsoft\Windows\Control Panel\Desktop\ScreenSaveActive" -s "0"
+    #regtool set "\HKLM\SOFTWARE\Policies\Microsoft\Windows\Control Panel\Desktop\ScreenSaveActive" -s "0"
+    #
+    # disable Security Center notifications
+    regtool set "\HKLM\SOFTWARE\Microsoft\Security Center\AntiVirusDisableNotify" 1
+    regtool set "\HKLM\SOFTWARE\Microsoft\Security Center\FirewallDisableNotify" 1
+    regtool set "\HKLM\SOFTWARE\Microsoft\Security Center\UpdatesDisableNotify" 1
+  become: true
+  when: '"CYGWIN" in ansible_os_family'

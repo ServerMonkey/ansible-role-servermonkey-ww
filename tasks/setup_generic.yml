@@ -21,15 +21,8 @@
     - cfg_locales
     - cfg_boot-faster
     - cfg_auto-upgrades
-
-- include_role: name=servermonkey.ww
-  vars:
-    task: '{{ loop_setup_generic_vms }}'
-  loop_control:
-    loop_var: loop_setup_generic_vms
-  loop:
-    - cfg_screensaver-disable
-  when: ansible_virtualization_role == 'guest'
+    - cfg_theme-windows
+    - autorun_set-resolution
 
 - block:
     - include_role: name=servermonkey.ww

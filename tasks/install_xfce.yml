@@ -1,8 +1,11 @@
 ---
 #info: Install full XFCE desktop with a modern theme
-- name: Install simple XFCE desktop (Debian)
+- name: Update cache
   package:
     update_cache: yes
+
+- name: Install simple XFCE desktop (Debian)
+  package:
     name:
       - xfce4
       - xfce4-*
@@ -10,7 +13,6 @@
 
 - name: Install full XFCE desktop (Debian)
   package:
-    update_cache: yes
     name:
       - task-xfce-desktop
   when: ansible_os_family == "Debian" and install_xfce_full
@@ -20,7 +22,9 @@
     name:
       - fonts-liberation  # Windows compatible fonts ~2 MB
       - fonts-open-sans  # common fonts ~3 MB
-  when: ansible_os_family == "Debian"
+  when: >
+    ansible_os_family == "Debian"
+    and ww_minimal_packages == false
 
 - name: Fonts (Fedora)
   package:
@@ -31,13 +35,13 @@
 
 - name: Install XFCE desktop basic tools
   package:
-    update_cache: yes
     name:
       - menulibre  # startmenu editor ~16 MB
       - papirus-icon-theme  # modern icon theme ~167 MB
       - numix-gtk-theme  # modern theme ~3 MB
       - plank  # icon based menu bar ~4 MB
       - dconf-cli  # CLI editor for GSettings <1 MB
+  when: ww_minimal_packages == false
 
 - name: Install XFCE desktop extras
   package:
@@ -45,32 +49,33 @@
       - dconf-editor  # GUI editor for GSettings ~3 MB
       - grub-customizer  # build custom GRUB themes ~4 MB
       - lightdm-settings  # configure slick-greeter <1 MB
-  when: install_xfce_extras
+  when:
+    - install_xfce_extras
+    - ww_minimal_packages == false
 
-- name: Install picom (sync monitor)
-  package:
-    name: picom  # better sync with monitor ~1 MB
-  when: ansible_virtualization_role == 'host'
+- block:
+    - name: Install picom (sync monitor)
+      package:
+        name: picom  # better sync with monitor ~1 MB
 
-- name: Install sync monitor script
-  copy:
-    src: picom-sync-monitor.sh
-    dest: '/usr/local/bin/picom-sync-monitor'
-    mode: '+x'
-  when: ansible_virtualization_role == 'host'
+    - name: Install sync monitor script
+      copy:
+        src: picom-sync-monitor.sh
+        dest: '/usr/local/bin/picom-sync-monitor'
+        mode: '+x'
 
-- name: Autostart sync monitor script
-  blockinfile:
-    path: '/etc/xdg/autostart/picom-sync-monitor.desktop'
-    create: yes
-    mode: 0644
-    block: |
-      [Desktop Entry]
-      Type=Application
-      Name=picom-sync-monitor
-      Comment=Synchronize Display
-      Exec=/usr/local/bin/picom-sync-monitor
-      OnlyShowIn=XFCE
+    - name: Autostart sync monitor script
+      blockinfile:
+        path: '/etc/xdg/autostart/picom-sync-monitor.desktop'
+        create: yes
+        mode: 0644
+        block: |
+          [Desktop Entry]
+          Type=Application
+          Name=picom-sync-monitor
+          Comment=Synchronize Display
+          Exec=/usr/local/bin/picom-sync-monitor
+          OnlyShowIn=XFCE
   when: ansible_virtualization_role == 'host'
 
 - include_role: name=servermonkey.ww

@@ -1,6 +1,7 @@
 #!/bin/sh
 #info: Set Firefox defaults for first start. Disable all firstrun pop-ups
 #info: , set as default browser and set homepage to duckduckgo.com
+# shellcheck disable=SC2009
 
 # args
 HOMEPAGE="$1"
@@ -17,6 +18,11 @@ if [ -n "$(command -v systeminfo)" ]; then
     BIN_FIREFOX="$PROGRAMFILES/Mozilla Firefox/firefox.exe"
 # posix
 else
+    # must run as normal user
+    if [ "$(id -u)" = 0 ]; then
+        echo 'This script must be run as a normal user, not root!' >&2
+        exit 1
+    fi
     BIN_FIREFOX=$(command -v firefox)
 fi
 
@@ -34,12 +40,23 @@ findprofile() {
     find "$HOME" -name prefs.js | grep -i firefox | grep -i .default
 }
 
+wait_for_firefox_quit() {
+    while ps aux | grep -v grep | grep -q lib/firefox; do sleep 1; done
+    while ps aux | grep -v grep | grep -q bin/firefox; do sleep 1; done
+}
+
 # create a new profile if there is none
 FILE_PREFS=$(findprofile)
 if [ -z "$FILE_PREFS" ]; then
-    "$BIN_FIREFOX" -CreateProfile default 1>/dev/null 2>&1
-    "$BIN_FIREFOX" -silent -setDefaultBrowser
-    sleep 1 # else 'CUSTOM SETTINGS' will fail
+    # this is not properly working
+    #"$BIN_FIREFOX" -CreateProfile default 1>/dev/null 2>&1
+    #wait_for_firefox_quit
+    "$BIN_FIREFOX" -headless -url localhost 1>/dev/null 2>&1 &
+    sleep 2
+    pgrep -f "headless -url localhost" | xargs kill -15
+    wait_for_firefox_quit
+    "$BIN_FIREFOX" -headless -silent -setDefaultBrowser 1>/dev/null 2>&1
+    wait_for_firefox_quit
 fi
 
 FILE_PREFS=$(findprofile)

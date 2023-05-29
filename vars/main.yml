@@ -1,5 +1,5 @@
 # undefined variable, define with set_fact or in playbook vars
-#current_pass
+current_password: '{{ ansible_password }}'
 current_user: '{{ ansible_user }}'
 current_groups: ''
 
@@ -8,6 +8,7 @@ ww_timezone: 'Europe/Stockholm'
 ww_fastpkg_downloads: '/var/lib/fastpkg/downloads/'
 ww_vm_res_x: 1280
 ww_vm_res_y: 720
+ww_minimal_packages: false  # when true, will skip packages not on Debian DVD 1
 servermonkey_debug: false  # devs only
 
 # cfg_apt
@@ -56,8 +57,12 @@ do_upgrade: true  # upgrade the OS
 # do_upgrade-fw
 do_upgrade_fw: true  # upgrade the firmware
 
+# cfg_firefox
+cfg_firefox_homepage: 'http://duckduckgo.com/'
+
 # cfg_xfce
 cfg_xfce_config: xfce4-theme-default
+cfg_xfce_suspend: true  # if false, will disable suspend, blanking and screensaver.
 
 # cfg_xfce-plank
 cfg_xfce_plank_config: xfce4-theme-plank-default

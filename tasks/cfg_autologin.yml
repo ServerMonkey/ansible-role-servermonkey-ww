@@ -1,15 +1,25 @@
 ---
 #info: Auto login user to window-manager, lightdm (XFCE, Openbox)
-- name: Autologin user
-  lineinfile:
-    path: '{{ lightdm_cfg }}'
-    regexp: '^autologin-user='
-    line: 'autologin-user={{ current_user }}'
-    insertafter: '^#autologin-user='
+- block:
+    - name: Autologin user (Posix)
+      lineinfile:
+        path: '{{ lightdm_cfg }}'
+        regexp: '^autologin-user='
+        line: 'autologin-user={{ current_user }}'
+        insertafter: '^#autologin-user='
 
-- name: Set autologin timeout
-  lineinfile:
-    path: '{{ lightdm_cfg }}'
-    regexp: '^autologin-user-timeout='
-    line: 'autologin-user-timeout=0'
-    insertafter: '^#autologin-user-timeout='
+    - name: Set autologin timeout (Posix)
+      lineinfile:
+        path: '{{ lightdm_cfg }}'
+        regexp: '^autologin-user-timeout='
+        line: 'autologin-user-timeout=0'
+        insertafter: '^#autologin-user-timeout='
+  when: ansible_os_family == 'Debian'
+
+- block:
+    - name: Autologin user (Windows)
+      shell: |
+        regtool set "\HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\AutoAdminLogon" 1 || exit 1
+        regtool set "\HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\DefaultUserName" "{{ current_user }}" || exit 1
+        regtool set "\HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\DefaultPassword" "{{ current_password }}" || exit 1
+  when: '"CYGWIN" in ansible_os_family'

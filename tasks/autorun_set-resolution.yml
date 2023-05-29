@@ -1,10 +1,11 @@
 ---
-#info: Set optimal Deskop resolution for VMs on boot
+#info: Set optimal Deskop resolution for VMs
 - name: Check if desktop OS
   stat:
     path: /etc/X11/default-display-manager
   register: set_resolution_xorg_is_installed
 
+# Posix VM
 - block:
     - name: Set VM resolution on user login, for all users
       blockinfile:
@@ -35,5 +36,31 @@
             echo "Please update this script"
             exit 1
         fi
-  when: "set_resolution_xorg_is_installed.stat.exists and ansible_virtualization_role == 'guest'"
   become: true
+  when:
+    - set_resolution_xorg_is_installed.stat.exists
+    - ansible_virtualization_role == 'guest'
+
+# Windows VM
+- block:
+    - name: Get primary video device (Windows)
+      shell: regtool list "\HKCC\System\CurrentControlSet\Control\VIDEO"
+      register: win_video_device
+      changed_when: false
+
+    - name: Set VM resolution (Windows)
+      shell: |
+        if [ -n "$(systeminfo | grep -F QEMU)" ]; then
+            regtool set "\HKCC\System\CurrentControlSet\Control\VIDEO\{{ win_video_device.stdout }}\0000\DefaultSettings.XResolution" {{ ww_vm_res_x }}
+            regtool set "\HKCC\System\CurrentControlSet\Control\VIDEO\{{ win_video_device.stdout }}\0000\DefaultSettings.YResolution" {{ ww_vm_res_y }}
+        else
+            echo "Skip set resolution, is a VM"
+        fi
+      register: win_set_resolution_result
+      changed_when: '"Skip set resolution, is a VM" not in win_set_resolution_result.stdout'
+
+    - debug:
+        msg: "{{ win_set_resolution_result.stdout }}"
+      when: win_set_resolution_result.stdout != ""
+  become: true
+  when: '"CYGWIN" in ansible_os_family'

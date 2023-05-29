@@ -1,0 +1,11 @@
+---
+#info: Same as cfg_firefox, but set a custom homepage
+- name: Set path to script
+  set_fact:
+    this_task_file: '{{ role_path }}/tasks/cfg_firefox.sh'
+
+- include_role: name=servermonkey.sh
+  vars:
+    sh: '{{ this_task_file }}'
+    sh_arg: '{{ cfg_firefox_homepage }}'
+    sh_nolog: true

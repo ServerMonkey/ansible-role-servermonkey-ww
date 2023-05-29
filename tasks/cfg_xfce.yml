@@ -1,5 +1,6 @@
 ---
-#info: Restore a custom XFCE configuration to target host
+#info: Restore a custom XFCE configuration and theme.
+#info: On VMs will always disable suspend, blanking and screensaver.
 - name: Force all XFCE users to logout
   shell: 'skill -KILL xfce4-session'
 
@@ -26,7 +27,6 @@
     path: '/home/{{ current_user }}/.config/xfce4'
     state: directory
     recurse: yes
-  register: gggg
   become_user: '{{ current_user }}'
 
 - name: Copy custom XFCE config
@@ -34,3 +34,32 @@
     src: '{{ cfg_xfce_config }}/'
     dest: '/home/{{ current_user }}/.config/xfce4/'
   become_user: '{{ current_user }}'
+
+- block:
+    - name: Delete xfce4-power-manager cfg
+      file:
+        state: absent
+        path: '/home/{{ current_user }}/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-power-manager.xml'
+      changed_when: false
+
+    - name: Disable screen turn off and auto suspend
+      blockinfile:
+        path: '/home/{{ current_user }}/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-power-manager.xml'
+        create: true
+        marker: "<!-- {mark} ANSIBLE MANAGED BLOCK -->"
+        block: |
+          <?xml version="1.0" encoding="UTF-8"?>
+          <channel name="xfce4-power-manager" version="1.0">
+            <property name="xfce4-power-manager" type="empty">
+              <property name="power-button-action" type="uint" value="4"/>
+              <property name="show-tray-icon" type="bool" value="false"/>
+              <property name="blank-on-ac" type="int" value="0"/>
+              <property name="dpms-on-ac-sleep" type="uint" value="0"/>
+              <property name="dpms-on-ac-off" type="uint" value="0"/>
+              <property name="lock-screen-suspend-hibernate" type="bool" value="true"/>
+              <property name="logind-handle-lid-switch" type="bool" value="false"/>
+              <property name="dpms-enabled" type="bool" value="true"/>
+            </property>
+          </channel>
+      become_user: '{{ current_user }}'
+  when: ansible_virtualization_role == 'guest' or cfg_xfce_suspend == false
