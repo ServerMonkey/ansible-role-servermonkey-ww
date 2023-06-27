@@ -8,7 +8,7 @@
 
 - name: Reboot (Posix)
   shell: "sh -c 'shutdown -r now'"
-  when: ansible_os_family == 'Debian'
+  when: '"CYGWIN" not in ansible_os_family'
   become: true
   async: 1
   poll: 0

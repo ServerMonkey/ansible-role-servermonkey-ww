@@ -82,7 +82,7 @@ install_base_all_firmware: false  # install all firmware, use on linux-live-kit
 install_desktop_minimal: false  # set to false for kiosk and minimal desktops
 
 # install_libvirt
-install_libvirt_allow_current_user: false  # add the current user to the libvirt group
+install_libvirt_allow_current_user: true  # add the current user to the libvirt group
 
 # install_nginx
 install_nginx_site_name: 'helloworld'

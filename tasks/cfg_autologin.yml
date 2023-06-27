@@ -1,5 +1,11 @@
 ---
 #info: Auto login user to window-manager, lightdm (XFCE, Openbox)
+#info: Set optimal Deskop resolution for VMs
+- name: Check if desktop OS
+  stat:
+    path: /etc/X11/default-display-manager
+  register: cfg_autologin_xorg_is_installed
+
 - block:
     - name: Autologin user (Posix)
       lineinfile:
@@ -14,12 +20,12 @@
         regexp: '^autologin-user-timeout='
         line: 'autologin-user-timeout=0'
         insertafter: '^#autologin-user-timeout='
-  when: ansible_os_family == 'Debian'
+  when: cfg_autologin_xorg_is_installed.stat.exists
 
 - block:
     - name: Autologin user (Windows)
       shell: |
-        regtool set "\HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\AutoAdminLogon" 1 || exit 1
-        regtool set "\HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\DefaultUserName" "{{ current_user }}" || exit 1
-        regtool set "\HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\DefaultPassword" "{{ current_password }}" || exit 1
+        regtool set "\HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\AutoAdminLogon" -s "1" || exit 1
+        regtool set "\HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\DefaultUserName" -s "{{ current_user }}" || exit 1
+        regtool set "\HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\DefaultPassword" -s "{{ current_password }}" || exit 1
   when: '"CYGWIN" in ansible_os_family'

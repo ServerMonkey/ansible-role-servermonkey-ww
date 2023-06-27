@@ -1,17 +1,29 @@
 ---
-#info: On Windows, disables screensaver and Security Center notifications
-- shell: |
-    # Disable screensaver for current user
-    regtool set "\HKCU\Control Panel\Desktop\ScreenSaveActive" -s "0"
-    #todo:
-    # Windows 7, Windows 8, and Windows 10
-    # https://www.tenforums.com/tutorials/118541-enable-disable-screen-saver-windows.html
-    #regtool set "\HKCU\Software\Policies\Microsoft\Windows\Control Panel\Desktop\ScreenSaveActive" -s "0"
-    #regtool set "\HKLM\SOFTWARE\Policies\Microsoft\Windows\Control Panel\Desktop\ScreenSaveActive" -s "0"
-    #
-    # disable Security Center notifications
-    regtool set "\HKLM\SOFTWARE\Microsoft\Security Center\AntiVirusDisableNotify" 1
-    regtool set "\HKLM\SOFTWARE\Microsoft\Security Center\FirewallDisableNotify" 1
-    regtool set "\HKLM\SOFTWARE\Microsoft\Security Center\UpdatesDisableNotify" 1
-  become: true
+#info: On Windows, removes all Screen Savers on VMs
+#info: . Also disables Security Center notifications.
+- block:
+#    - name: Force disable Bliss wallpaper
+#      shell: mv /cygdrive/c/WINDOWS/Web/Wallpaper/Bliss.bmp /cygdrive/c/WINDOWS/Web/Wallpaper/Bliss.jpg
+
+      # this is not working for HKCU without a user profile
+      #regtool set "\HKCU\Control Panel\Desktop\ScreenSaveActive" -s "0" || exit 1
+    - name: Force remove screensaver on VM
+      shell: |
+        if [ -n "$(systeminfo | grep -F QEMU)" ]; then
+            find /cygdrive/c/WINDOWS/system32/ -type f -name "*.scr" -delete
+        else
+            echo "Skip remove screensaver, is a VM"
+        fi
+
+    - name: Disable Security Center notifications
+      shell: |
+        regtool set "\HKLM\SOFTWARE\Microsoft\Security Center\AntiVirusDisableNotify" 1 || exit 1
+        regtool set "\HKLM\SOFTWARE\Microsoft\Security Center\FirewallDisableNotify" 1 || exit 1
+        regtool set "\HKLM\SOFTWARE\Microsoft\Security Center\UpdatesDisableNotify" 1 || exit 1
   when: '"CYGWIN" in ansible_os_family'
+
+#todo:
+# Windows 7, Windows 8, and Windows 10
+# https://www.tenforums.com/tutorials/118541-enable-disable-screen-saver-windows.html
+#regtool set "\HKCU\Software\Policies\Microsoft\Windows\Control Panel\Desktop\ScreenSaveActive" -s "0"
+#regtool set "\HKLM\SOFTWARE\Policies\Microsoft\Windows\Control Panel\Desktop\ScreenSaveActive" -s "0"

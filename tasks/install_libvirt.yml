@@ -29,5 +29,3 @@
     virsh net-autostart default
     virsh net-start default || true
   changed_when: false
-
-#todo: find out why "lvmcinfig" faile during installation, install each package separate

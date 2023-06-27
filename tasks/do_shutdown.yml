@@ -8,9 +8,7 @@
 
 - name: Shutdown (Posix)
   shell: "sh -c 'shutdown -h now'"
-  when: ansible_os_family == 'Debian'
+  when: '"CYGWIN" not in ansible_os_family'
   become: true
   async: 1
   poll: 0
-
-# actually test if sucessful after a timeout, add another do_wait-shutdown

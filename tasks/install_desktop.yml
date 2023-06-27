@@ -46,7 +46,7 @@
       - flameshot  # better screenshot tool
       - persepolis  # download manager
       - pidgin  # chat application
-  when: not install_desktop_minimal
+  when: install_desktop_minimal == false
 
 - name: Detect PC type
   shell: dmidecode --string chassis-type
@@ -57,4 +57,6 @@
   package:
     name:
       - network-manager-gnome  # let users manage networks, like WIFI
-  when: 'not install_desktop_minimal and shell_install_desktop_pc_type.stdout == "Notebook"'
+  when:
+    - install_desktop_minimal == false
+    - shell_install_desktop_pc_type.stdout == "Notebook"

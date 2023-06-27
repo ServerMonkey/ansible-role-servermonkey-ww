@@ -1,5 +1,5 @@
 #!/bin/sh
-#info: Removes/blanks the wallpaper
+#info: Removes/blanks the wallpaper for the current user
 
 # windows
 if [ -n "$(command -v systeminfo)" ]; then

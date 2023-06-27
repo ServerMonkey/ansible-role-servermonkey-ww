@@ -1,5 +1,5 @@
 ---
-#info: Set optimal Deskop resolution for VMs
+#info: Set optimal Desktop resolution on VMs
 - name: Check if desktop OS
   stat:
     path: /etc/X11/default-display-manager

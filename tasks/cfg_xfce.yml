@@ -16,24 +16,26 @@
     path: '/home/{{ current_user }}/.cache/sessions'
   changed_when: false
 
-- name: Delete XFCE cfg
-  file:
-    state: absent
-    path: '/home/{{ current_user }}/.config/xfce4'
-  changed_when: false
+- block:
+    - name: Delete XFCE cfg
+      file:
+        state: absent
+        path: '/home/{{ current_user }}/.config/xfce4'
+      changed_when: false
 
-- name: Create XFCE .config directory
-  file:
-    path: '/home/{{ current_user }}/.config/xfce4'
-    state: directory
-    recurse: yes
-  become_user: '{{ current_user }}'
+    - name: Create XFCE .config directory
+      file:
+        path: '/home/{{ current_user }}/.config/xfce4'
+        state: directory
+        recurse: yes
+      become_user: '{{ current_user }}'
 
-- name: Copy custom XFCE config
-  copy:
-    src: '{{ cfg_xfce_config }}/'
-    dest: '/home/{{ current_user }}/.config/xfce4/'
-  become_user: '{{ current_user }}'
+    - name: Copy custom XFCE config
+      copy:
+        src: '{{ cfg_xfce_config }}/'
+        dest: '/home/{{ current_user }}/.config/xfce4/'
+      become_user: '{{ current_user }}'
+  when: ansible_distribution == 'Debian'
 
 - block:
     - name: Delete xfce4-power-manager cfg

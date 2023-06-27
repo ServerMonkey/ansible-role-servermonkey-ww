@@ -4,54 +4,59 @@
   package:
     update_cache: yes
 
-- name: Install simple XFCE desktop (Debian)
-  package:
-    name:
-      - xfce4
-      - xfce4-*
-  when: ansible_os_family == "Debian" and install_xfce_full == false
+- block:
+    - name: Install simple XFCE desktop
+      package:
+        name:
+          - xfce4
+          - xfce4-*
+      when: install_xfce_full == false
 
-- name: Install full XFCE desktop (Debian)
-  package:
-    name:
-      - task-xfce-desktop
-  when: ansible_os_family == "Debian" and install_xfce_full
+    - name: Install full XFCE desktop
+      package:
+        name:
+          - task-xfce-desktop
+      when:
+        - install_xfce_full
 
-- name: Fonts (Debian)
-  package:
-    name:
-      - fonts-liberation  # Windows compatible fonts ~2 MB
-      - fonts-open-sans  # common fonts ~3 MB
-  when: >
-    ansible_os_family == "Debian"
-    and ww_minimal_packages == false
+    - name: Fonts (Debian)
+      package:
+        name:
+          - fonts-liberation  # Windows compatible fonts ~2 MB
+          - fonts-open-sans  # common fonts ~3 MB
+      when:
+        - ansible_os_family != "Fedora"
+        - ww_minimal_packages == false
 
-- name: Fonts (Fedora)
-  package:
-    name:
-      - liberation-fonts  # Windows compatible fonts
-      - open-sans-fonts  # common fonts
-  when: ansible_os_family == "Fedora"
+    - name: Fonts (Fedora)
+      package:
+        name:
+          - liberation-fonts  # Windows compatible fonts
+          - open-sans-fonts  # common fonts
+      when:
+        - ansible_os_family == "Fedora"
+        - ww_minimal_packages == false
 
-- name: Install XFCE desktop basic tools
-  package:
-    name:
-      - menulibre  # startmenu editor ~16 MB
-      - papirus-icon-theme  # modern icon theme ~167 MB
-      - numix-gtk-theme  # modern theme ~3 MB
-      - plank  # icon based menu bar ~4 MB
-      - dconf-cli  # CLI editor for GSettings <1 MB
-  when: ww_minimal_packages == false
+    - name: Install XFCE desktop basic tools
+      package:
+        name:
+          - menulibre  # startmenu editor ~16 MB
+          - papirus-icon-theme  # modern icon theme ~167 MB
+          - numix-gtk-theme  # modern theme ~3 MB
+          - plank  # icon based menu bar ~4 MB
+          - dconf-cli  # CLI editor for GSettings <1 MB
+      when: ww_minimal_packages == false
 
-- name: Install XFCE desktop extras
-  package:
-    name:
-      - dconf-editor  # GUI editor for GSettings ~3 MB
-      - grub-customizer  # build custom GRUB themes ~4 MB
-      - lightdm-settings  # configure slick-greeter <1 MB
-  when:
-    - install_xfce_extras
-    - ww_minimal_packages == false
+    - name: Install XFCE desktop extras
+      package:
+        name:
+          - dconf-editor  # GUI editor for GSettings ~3 MB
+          - grub-customizer  # build custom GRUB themes ~4 MB
+          - lightdm-settings  # configure slick-greeter <1 MB
+      when:
+        - install_xfce_extras
+        - ww_minimal_packages == false
+  when: ansible_distribution != "Kali"
 
 - block:
     - name: Install picom (sync monitor)
@@ -76,7 +81,9 @@
           Comment=Synchronize Display
           Exec=/usr/local/bin/picom-sync-monitor
           OnlyShowIn=XFCE
-  when: ansible_virtualization_role == 'host'
+  when:
+    - ansible_virtualization_role == 'host'
+    - ansible_distribution != "Kali"
 
 - include_role: name=servermonkey.ww
   vars:

@@ -21,7 +21,6 @@
     - cfg_locales
     - cfg_boot-faster
     - cfg_auto-upgrades
-    - cfg_theme-windows
     - autorun_set-resolution
 
 - block:
