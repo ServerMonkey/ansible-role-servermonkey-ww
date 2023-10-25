@@ -1,6 +1,6 @@
 # ansible-role-servermonkey-ww
 
-A collection of generic Ansible tasks and tools.  
+Servermonkeys generic sysadmin tasks
 
 ## Installation
 

@@ -19,16 +19,20 @@
 
 - name: Install generic Desktop packages
   package:
-    update_cache: yes
     name:
       - libreoffice-gtk3
+      - libreoffice-base
+      - libreoffice-calc
+      - libreoffice-draw
+      - libreoffice-impress
+      - libreoffice-math
       - thunderbird
-      - quodlibet
+      - quodlibet  # music player
       - webext-privacy-badger  # stop trackers
       - transmission-gtk  # torrents
-      - unison  # on demand file syncronisation
+      - unison  # best file syncronisation tool
       - unison-gtk
-      - syncthing  # live file syncronisation
+      - syncthing  # live file synchronisation, works well with Android
       - syncthing-gtk
       - borgbackup  # backup tool
       - vorta  # GUI for borgbackup
@@ -48,15 +52,36 @@
       - pidgin  # chat application
   when: install_desktop_minimal == false
 
-- name: Detect PC type
-  shell: dmidecode --string chassis-type
-  register: shell_install_desktop_pc_type
+- name: Install printing system
+  package:
+    name: system-config-printer  # graphical interface to configure the printing system
+  when: ansible_virtualization_role != 'guest'
+
+- name: Detect if WIFI is available
+  shell: iw dev | grep Interface | awk '{print $2}'
+  register: shell_install_desktop_has_wifi
+  failed_when: shell_install_desktop_has_wifi.rc != 0
   changed_when: false
 
-- name: Install network-manager on Notebooks
+- name: Install network-manager if WIFI is available
   package:
     name:
-      - network-manager-gnome  # let users manage networks, like WIFI
+      - network-manager-gnome  # let users manage networks, like WIFI, also enables tray icon in XFCE
   when:
     - install_desktop_minimal == false
-    - shell_install_desktop_pc_type.stdout == "Notebook"
+    - shell_install_desktop_has_wifi.stdout != ""
+
+- name: Detect GPU
+  script: detect-gpu.sh
+  register: install_desktop_detect_gpu
+  failed_when: '"Failed" in install_desktop_detect_gpu.stdout'
+  changed_when: false
+
+- name: Install QXL GPU driver and SPICE agent on VMs
+  package:
+    name:
+      - xserver-xorg-video-qxl
+      - spice-vdagent
+  when:
+    - "'QXL' in install_desktop_detect_gpu.stdout"
+    - "ansible_virtualization_role == 'guest'"

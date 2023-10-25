@@ -1,7 +1,7 @@
 # undefined variable, define with set_fact or in playbook vars
 current_password: '{{ ansible_password }}'
 current_user: '{{ ansible_user }}'
-current_groups: ''
+current_groups: ''  # example: 'kvm,libvirt'
 
 # generic
 ww_timezone: 'Europe/Stockholm'
@@ -11,8 +11,8 @@ ww_vm_res_y: 720
 ww_minimal_packages: false  # when true, will skip packages not on Debian DVD 1
 servermonkey_debug: false  # devs only
 
-# cfg_apt
-cfg_apt_repos: default  # enable additional apt repos
+# cfg_apt-repos
+cfg_apt_repos: ''  # autoconfigure and enable apt repos, look at cfg_apt.sh
 
 # cfg_autologin
 lightdm_cfg: '/etc/lightdm/lightdm.conf'
@@ -35,12 +35,16 @@ cfg_ntp: true  # false will copletely skip NTP installation and setup
 cfg_ntp_timezone: '{{ ww_timezone }}'
 cfg_auto_upgrades: true
 
+# cfg_motd
+cfg_motd: ""  # message when user logs into a shell
+
 # cfg_theme
-# set cfg_theme_grub_png to false to disable wallpaper in grub
-# alt: '/usr/share/desktop-base/moonlight-theme/grub/grub-4x3.png'
+# set cfg_theme_grub_png to 'false' to disable wallpaper in grub
+# alt default: '/usr/share/desktop-base/moonlight-theme/grub/grub-4x3.png'
 cfg_theme_grub_png: false
 cfg_theme_wall_img: '/usr/share/desktop-base/moonlight-theme/wallpaper/contents/images/1920x1080.svg'
-cfg_theme_name: 'servermonkey-theme'
+cfg_theme_name: 'servermonkey'  # more themes in /usr/share/desktop-base/
+# example themes: futureprototype, homeworld, joy-inksplat, joy, lines, moonlight, softwaves, spacefun
 cfg_theme_grub_color: 'light-gray/black'
 cfg_theme_grub_color_hl: 'black/light-gray'
 
@@ -115,7 +119,3 @@ setup_wordpress_nginx_cfg_src: 'nginx_wordpress.conf'
 setup_wordpress_nginx_cfg: '/etc/nginx/sites-available/wordpress.conf'
 setup_wordpress_sql_db: 'wpdb'
 setup_wordpress_sql_user: 'wpadmin'
-
-# install_wildwest
-install_wildwest_developer: false  # if you want to develop the wildwest toolset itself
-install_wildwest_sysadmin: false  # HPILO and IPMI tools, some tools won't work without a Desktop OS

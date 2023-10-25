@@ -1,0 +1,33 @@
+---
+#info: Install libdvd-pkg, enables DVD playback
+- name: Set libdvd-pkg to install
+  debconf:
+    name: "libdvd-pkg"
+    question: "libdvd-pkg/post-invoke_hook-install"
+    value: 'true'
+    vtype: "select"
+
+- name: Set libdvd-pkg to autoremove
+  debconf:
+    name: "libdvd-pkg"
+    question: "libdvd-pkg/post-invoke_hook-remove"
+    value: 'false'
+    vtype: "select"
+
+- name: Set libdvd-pkg to build
+  debconf:
+    name: "libdvd-pkg"
+    question: "libdvd-pkg/build"
+    value: 'true'
+    vtype: "select"
+
+- name: Install libdvd-pkg
+  package:
+    update_cache: yes
+    name: libdvd-pkg  # DVD ripping - might need to run: dpkg-reconfigure libdvd-pkg
+
+# see: https://askubuntu.com/questions/1094062/libdvd-pkg-apt-get-check-failed-you-may-have-broken-packages-aborting
+- name: libdvd-pkg bugfix
+  shell: sh /usr/lib/libdvd-pkg/b-i_libdvdcss.sh
+  register: shell_setup_dracula_libdvdcss
+  changed_when: 'shell_setup_dracula_libdvdcss.stdout != ""'

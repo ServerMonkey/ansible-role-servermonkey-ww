@@ -2,9 +2,7 @@
 #info: Install a generic office workstation system
 - name: Set facts
   set_fact:
-    current_user: worker
-    current_pass: worker
-    ww_upgrade_os: false
+    do_upgrade: false
     install_base_extras: true
     install_xfce_full: true
 

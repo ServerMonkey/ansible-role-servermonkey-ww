@@ -3,11 +3,11 @@
 #info: , Good to run before any other major task
 - name: Set facts
   set_fact:
+    cfg_apt_repos: 'offline,cdrom'
     cfg_auto_upgrades: false
     cfg_ntp: false
     do_upgrade: false
     do_upgrade_fw: false
-    cfg_apt_repos: offline-cdrom
 
 - include_role: name=servermonkey.ww
   vars:

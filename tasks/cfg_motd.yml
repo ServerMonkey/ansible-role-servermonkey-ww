@@ -1,0 +1,6 @@
+---
+#info: Set /etc/motd (Login Banner)
+- name: Create empty /etc/motd file
+  copy:
+    content: '{{ cfg_motd }}'
+    dest: /etc/motd

@@ -3,7 +3,7 @@
 - name: 'Set kiosk user to: {{ kiosk_user }}'
   set_fact:
     current_user: '{{ kiosk_user }}'
-    current_pass: '{{ kiosk_pass }}'
+    current_password: '{{ kiosk_pass }}'
   when: kiosk_autologin
 
 # need specific version, because of a bug on Raspberry Pi hardware

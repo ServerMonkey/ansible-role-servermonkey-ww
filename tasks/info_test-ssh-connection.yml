@@ -1,0 +1,39 @@
+---
+#info: Verify SSH connection
+- set_fact:
+    info_test_ssh_current_host: "{{ ansible_host }}"
+
+- name: Verify SSH connection
+  connection: local
+  vars:
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+  shell: |
+    ssh -tt -o batchmode=yes "{{ current_user }}@{{ info_test_ssh_current_host }}" 2>&1 |
+    sed '/denied (publickey,password)/d'
+  register: test_ssh_connection_error
+  async: 60
+  poll: 0
+  throttle: 20
+  become: false
+  failed_when: false
+
+- name: Check on an async task
+  connection: local
+  vars:
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+  async_status:
+    jid: '{{ test_ssh_connection_error.ansible_job_id }}'
+  register: job
+  until: job.finished
+  retries: 1000
+  delay: 3
+  become: false
+
+- include_role: name=servermonkey.ww_logger
+  vars:
+    ww_msg: '{{ job.stdout }}'
+    ww_logfile: 'servermonkey.ww_info_test-ssh-connection'
+
+#- debug:
+#    msg: test_ssh_connection_error.stdout
+#  when: test_ssh_connection_error.rc != 0

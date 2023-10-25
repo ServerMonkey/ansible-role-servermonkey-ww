@@ -7,7 +7,7 @@
     - name: Add user '{{ current_user }}'
       user:
         name: '{{ current_user }}'
-        password: "{{ current_pass | password_hash('sha512') }}"
+        password: "{{ current_password | string | password_hash('sha512') }}"
         shell: /bin/bash
 
     - name: Add users group '{{ current_user }}'
@@ -18,7 +18,8 @@
     - name: Add user '{{ current_user }}' to groups
       user:
         name: '{{ current_user }}'
-        groups: '{{ current_user }},{{ current_groups }}'
+        group: '{{ current_user }}'
+        groups: '{{ current_groups }}'
         append: yes
   when: '"CYGWIN" not in ansible_os_family'
 

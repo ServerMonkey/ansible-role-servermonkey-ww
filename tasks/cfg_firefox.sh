@@ -97,7 +97,9 @@ process_quit() {
             for SUBPID in $PIDS; do
                 FOUND=$(ps -p "$SUBPID" -o comm=)
                 echo "quit process PID:$SUBPID NAME:$1 FOUND:$FOUND"
-                kill -15 "$SUBPID" || echo "FAILED: kill -15 '$SUBPID"
+                kill -9 "$SUBPID" || echo "skip soft kill: $SUBPID"
+                process_wait "$1"
+                kill -15 "$SUBPID" || echo "skip hard kill: $SUBPID"
                 process_wait "$1"
             done
         fi
@@ -119,8 +121,10 @@ if [ -z "$FILE_PREFS" ]; then
         process_quit "firefox.exe"
     else
         "$BIN_FIREFOX" -headless -url localhost 1>/dev/null 2>&1 &
+        sleep 3
         process_quit "headless -url localhost"
         "$BIN_FIREFOX" -headless -silent -setDefaultBrowser 1>/dev/null 2>&1 &
+        sleep 3
         process_quit "headless -silent -setDefaultBrowser"
     fi
 fi

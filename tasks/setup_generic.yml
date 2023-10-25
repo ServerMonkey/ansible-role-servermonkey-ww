@@ -10,7 +10,7 @@
     - info_test-or-fail
     - info_test-become
     - cfg_network
-    - 'cfg_apt-{{ cfg_apt_repos }}'
+    - cfg_apt-repos
     - cfg_bash
     - cfg_dis-beep
     - cfg_dis-me

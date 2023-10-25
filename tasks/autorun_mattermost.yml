@@ -1,0 +1,16 @@
+---
+#info: On XFCE user session, autostart Mattermost (flatpak)
+- name: Autostart Mattermost
+  blockinfile:
+    path: '/home/{{ current_user }}/.config/autostart/mattermost.desktop'
+    create: yes
+    block: |
+      [Desktop Entry]
+      Version=1.0
+      Name=Mattermost
+      Comment=Mattermost is a collaboration platform.
+      Type=Application
+      Exec=/usr/bin/flatpak run --branch=stable --arch=x86_64 --command=mattermost-flatpak --file-forwarding com.mattermost.Desktop --enable-features=WebRTCPipeWireCapturer @@u %U @@
+      Terminal=false
+      StartupNotify=false
+  become_user: '{{ current_user }}'

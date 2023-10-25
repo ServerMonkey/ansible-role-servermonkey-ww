@@ -1,8 +1,8 @@
 ---
 #info: Change the default desktop and GRUB theme
-- name: Set facts
+- name: Set default theme path
   set_fact:
-    cfg_theme_path_base: '/usr/share/desktop-base/{{ cfg_theme_name }}/'
+    cfg_theme_path_base: '/usr/share/desktop-base/{{ cfg_theme_name }}-theme/'
 
 - name: Set facts
   set_fact:
@@ -24,81 +24,100 @@
     cfg_theme_grubwall: '{{ cfg_theme_path_wall }}wallpaper-grub.png'
     cfg_theme_path_grub: '{{ cfg_theme_path_base }}grub/'
 
-- name: Create theme directories for wallpaper
-  file:
-    path: '{{ cfg_theme_path_wall }}'
-    state: directory
-    mode: '0755'
-    recurse: yes
+- name: Debug
+  debug:
+    msg: |
+      cfg_theme_path_base={{ cfg_theme_path_base }}
+      cfg_theme_wall_img={{ cfg_theme_wall_img }}
+      cfg_theme_wall={{ cfg_theme_wall }}
+      cfg_theme_gnomewall={{ cfg_theme_gnomewall }}
+      cfg_theme_gnomelock={{ cfg_theme_gnomelock }}
+      cfg_theme_grubwall={{ cfg_theme_grubwall }}
+      cfg_theme_path_grub={{ cfg_theme_path_grub }}
+  when: servermonkey_debug
 
-- name: Create theme directories for GRUB
-  file:
-    path: '{{ cfg_theme_path_grub }}'
-    state: directory
-    mode: '0755'
-    recurse: yes
+# check if theme directory already exists
+- name: Check if theme directory already exists
+  stat:
+    path: '{{ cfg_theme_path_base }}'
+  register: stat_cfg_theme_path_base
 
-- name: Create theme directories
-  file:
-    path: '{{ cfg_theme_path_lock }}'
-    state: directory
-    mode: '0755'
-    recurse: yes
+# create new custom theme directory if stat_cfg_theme_path_base is false
+- block:
+    - name: Create custom theme directories for wallpaper
+      file:
+        path: '{{ cfg_theme_path_wall }}'
+        state: directory
+        mode: '0755'
+        recurse: yes
 
-# WALLPAPER
-- name: Link wallpaper to theme
-  file:
-    src: '{{ cfg_theme_wall_img }}'
-    dest: '{{ cfg_theme_wall }}'
-    state: link
-    force: yes
-    follow: no
+    - name: Create custom theme directories for GRUB
+      file:
+        path: '{{ cfg_theme_path_grub }}'
+        state: directory
+        mode: '0755'
+        recurse: yes
+
+    - name: Create custom theme directories for lock
+      file:
+        path: '{{ cfg_theme_path_lock }}'
+        state: directory
+        mode: '0755'
+        recurse: yes
+
+    - name: Create custom theme gnome-background.xml
+      blockinfile:
+        path: '{{ cfg_theme_gnomewall }}'
+        create: yes
+        block: |
+          <background>
+            <static>
+              <duration>8640000.0</duration>
+              <file>
+                <size width="1920" height="1080">{{ cfg_theme_wall }}</size>
+              </file>
+            </static>
+          </background>
+
+    - name: Link gnome-wallpaper to gnome-lockscreen
+      file:
+        src: '{{ cfg_theme_gnomewall }}'
+        dest: '{{ cfg_theme_gnomelock }}'
+        state: link
+        follow: no
+
+    - name: Link wallpaper to theme
+      file:
+        src: '{{ cfg_theme_wall_img }}'
+        dest: '{{ cfg_theme_wall }}'
+        state: link
+        follow: no
+
+    - name: Link plymouth
+      file:
+        src: '/usr/share/plymouth/themes/homeworld'
+        dest: '{{ cfg_theme_path_base }}plymouth'
+        state: link
+        follow: no
+  when: stat_cfg_theme_path_base.stat.exists == false
+
+- name: Set desktop-theme
+  alternatives:
+    name: desktop-theme
+    link: /usr/share/desktop-base/active-theme
+    path: '{{ cfg_theme_path_base }}'
 
 - name: Set desktop-background
   alternatives:
     name: desktop-background
+    link: /usr/share/images/desktop-base/desktop-background
     path: '{{ cfg_theme_wall }}'
 
 - name: Set desktop-login-background
   alternatives:
     name: desktop-login-background
+    link: /usr/share/images/desktop-base/login-background.svg
     path: '{{ cfg_theme_wall }}'
-
-# GNOME
-- name: Config gnome-background.xml
-  blockinfile:
-    path: '{{ cfg_theme_gnomewall }}'
-    create: yes
-    block: |
-      <background>
-        <static>
-          <duration>8640000.0</duration>
-          <file>
-            <size width="1920" height="1080">{{ cfg_theme_wall }}</size>
-          </file>
-        </static>
-      </background>
-
-- name: Link gnome-wallpaper to gnome-lockscreen
-  file:
-    src: '{{ cfg_theme_gnomewall }}'
-    dest: '{{ cfg_theme_gnomelock }}'
-    state: link
-
-# THEME
-- name: Set desktop-theme
-  alternatives:
-    name: desktop-theme
-    path: '{{ cfg_theme_path_base }}'
-
-# PLYMOUTH
-- name: Link plymouth
-  file:
-    src: '../../plymouth/themes/debian-theme'
-    dest: '{{ cfg_theme_path_base }}plymouth'
-    state: link
-    force: yes
-    follow: no
 
 # GRUB
 - name: Config grub wallpaper

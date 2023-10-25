@@ -19,3 +19,23 @@
       vars:
         ww_msg: 'Unreachable: {{ info_test_error.msg }}'
         ww_logfile: servermonkey.ww_info_test
+      when:
+        - info_test_error.msg is defined
+        - '"python: No such file or directory" not in info_test_error.msg'
+        - '"sudo password is required" not in info_test_error.msg'
+
+    - include_role: name=servermonkey.ww_logger
+      vars:
+        ww_msg: 'Unreachable: sudo probably failed, verify that BECOME_METHOD is defined'
+        ww_logfile: servermonkey.ww_info_test
+      when:
+        - info_test_error.msg is defined
+        - '"python: No such file or directory" in info_test_error.msg'
+
+    - include_role: name=servermonkey.ww_logger
+      vars:
+        ww_msg: 'Unreachable: sudo password is required, else try: rm -rf ~/.ww/cache/*'
+        ww_logfile: servermonkey.ww_info_test
+      when:
+        - info_test_error.msg is defined
+        - '"sudo password is required" in info_test_error.msg'

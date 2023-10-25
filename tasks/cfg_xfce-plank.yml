@@ -4,82 +4,84 @@
   vars:
     task: cfg_xfce
 
-- name: Copy XFCE panel config for Plank
-  copy:
-    src: '{{ cfg_xfce_plank_config }}/'
-    dest: '/home/{{ current_user }}/.config/xfce4/'
-  become_user: '{{ current_user }}'
+- block:
+    - name: Copy XFCE panel config for Plank
+      copy:
+        src: '{{ cfg_xfce_plank_config }}/'
+        dest: '/home/{{ current_user }}/.config/xfce4/'
+      become_user: '{{ current_user }}'
 
-- name: Autostart Plank
-  blockinfile:
-    path: '/home/{{ current_user }}/.config/autostart/plank.desktop'
-    create: yes
-    block: |
-      [Desktop Entry]
-      Version=1.0
-      Name=Plank
-      Comment=Application launcher
-      Type=Application
-      Exec=plank
-      Terminal=false
-      StartupNotify=false
-  become_user: '{{ current_user }}'
+    - name: Autostart Plank
+      blockinfile:
+        path: '/home/{{ current_user }}/.config/autostart/plank.desktop'
+        create: yes
+        block: |
+          [Desktop Entry]
+          Version=1.0
+          Name=Plank
+          Comment=Application launcher
+          Type=Application
+          Exec=plank
+          Terminal=false
+          StartupNotify=false
+      become_user: '{{ current_user }}'
 
-- name: Delete Plank themes folder
-  file:
-    state: absent
-    path: '/home/{{ current_user }}/.local/share/plank'
-  changed_when: false
+    - name: Delete Plank themes folder
+      file:
+        state: absent
+        path: '/home/{{ current_user }}/.local/share/plank'
+      changed_when: false
 
-- name: Create Plank themes folder
-  file:
-    path: '/home/{{ current_user }}/.local/share/plank/themes'
-    state: directory
-  become_user: '{{ current_user }}'
-  changed_when: false
+    - name: Create Plank themes folder
+      file:
+        path: '/home/{{ current_user }}/.local/share/plank/themes'
+        state: directory
+      become_user: '{{ current_user }}'
+      changed_when: false
 
-- name: Custom Plank themes
-  copy:
-    src: '{{ cfg_xfce_plank_theme }}/'
-    dest: '/home/{{ current_user }}/.local/share/plank/themes/'
-  become_user: '{{ current_user }}'
+    - name: Custom Plank themes
+      copy:
+        src: '{{ cfg_xfce_plank_theme }}/'
+        dest: '/home/{{ current_user }}/.local/share/plank/themes/'
+      become_user: '{{ current_user }}'
 
-- name: Delete Plank docks folder
-  file:
-    state: absent
-    path: '/home/{{ current_user }}/.config/plank'
-  changed_when: false
+    - name: Delete Plank docks folder
+      file:
+        state: absent
+        path: '/home/{{ current_user }}/.config/plank'
+      changed_when: false
 
-- name: Create Plank docks folder
-  file:
-    path: '/home/{{ current_user }}/.config/plank'
-    state: directory
-  become_user: '{{ current_user }}'
-  changed_when: false
+    - name: Create Plank docks folder
+      file:
+        path: '/home/{{ current_user }}/.config/plank'
+        state: directory
+      become_user: '{{ current_user }}'
+      changed_when: false
 
-- name: Custom Plank docks
-  copy:
-    src: '{{ cfg_xfce_plank_dock }}/'
-    dest: '/home/{{ current_user }}/.config/plank/dock1/'
-  become_user: '{{ current_user }}'
+    - name: Custom Plank docks
+      copy:
+        src: '{{ cfg_xfce_plank_dock }}/'
+        dest: '/home/{{ current_user }}/.config/plank/dock1/'
+      become_user: '{{ current_user }}'
 
-- name: Configure Plank - icon-size
-  dconf:
-    key: "/net/launchpad/plank/docks/dock1/icon-size"
-    value: "32"
-    state: present
-  become_user: '{{ current_user }}'
+    - name: Configure Plank - icon-size
+      dconf:
+        key: "/net/launchpad/plank/docks/dock1/icon-size"
+        value: "32"
+        state: present
+      become_user: '{{ current_user }}'
 
-- name: Configure Plank - unhide
-  dconf:
-    key: "/net/launchpad/plank/docks/dock1/hide-mode"
-    value: "'none'"
-    state: present
-  become_user: '{{ current_user }}'
+    - name: Configure Plank - unhide
+      dconf:
+        key: "/net/launchpad/plank/docks/dock1/hide-mode"
+        value: "'none'"
+        state: present
+      become_user: '{{ current_user }}'
 
-- name: Configure Plank - theme
-  dconf:
-    key: "/net/launchpad/plank/docks/dock1/theme"
-    value: "'Servermonkey'"
-    state: present
-  become_user: '{{ current_user }}'
+    - name: Configure Plank - theme
+      dconf:
+        key: "/net/launchpad/plank/docks/dock1/theme"
+        value: "'Servermonkey'"
+        state: present
+      become_user: '{{ current_user }}'
+  when: ansible_distribution == 'Debian'

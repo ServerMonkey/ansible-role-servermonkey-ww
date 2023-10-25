@@ -1,5 +1,5 @@
 ---
-#info: Cleanup unseless files to give more disk space
+#info: Cleanup unseless apt and flatpak files to give more disk space
 - block:
     - name: Remove unused packages
       package:
@@ -18,6 +18,4 @@
 
     - name: Clean APT cache
       shell: apt-get clean
-      args:
-        warn: false
   when: ansible_os_family == "Debian"

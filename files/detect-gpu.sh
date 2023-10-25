@@ -2,7 +2,7 @@
 #info: Detect GPU vendor
 
 if [ -z "$(command -v lspci)" ]; then
-	echo "Failed to find lspci"
+	echo "Failed to find lspci" >&2
 	exit 1
 fi
 
@@ -24,7 +24,7 @@ elif echo "$GPU" | grep -q "MGA G200"; then
 elif echo "$GPU" | grep -q ASPEED; then
 	echo "ASPEED"
 else
-	echo "Failed to detect GPU: $GPU"
-	echo "Please update this script"
+	echo "Failed to detect GPU: $GPU" >&2
+	echo "Please update this script" >&2
 	exit 1
 fi

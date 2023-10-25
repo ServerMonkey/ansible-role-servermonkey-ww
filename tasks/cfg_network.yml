@@ -1,17 +1,42 @@
 ---
 #info: Basic network configuration, set DNS
+
+# This configuration has the following assumptions:
+# - all cabled network interfaces are automatically configured with DHCP
+# - if there is no WI-FI card, only /etc/network/interfaces is used
+# - if there is a WI-FI card, NetworkManager is used
+
 - block:
     #    - name: Remove NetworkManager profiles
     #      shell: rm -rf /etc/NetworkManager/system-connections/*
 
-    - name: Disable NetworkManager permanently
+    - name: Detect if WIFI is available
+      shell: iw dev | grep Interface | awk '{print $2}'
+      register: shell_cfg_network_has_wifi
+      failed_when: shell_cfg_network_has_wifi.rc != 0
+      changed_when: false
+
+    # buggy KALI settings?
+    - name: Disable NetworkManager permanently if no WIFI card is available
       service:
         name: NetworkManager
         state: stopped
         enabled: false
-      when: ansible_distribution == "Kali"
+      register: service_cfg_network_networkmanager
+      when:
+        - ansible_distribution == "Kali"
+        - shell_cfg_network_has_wifi.stdout == ""
 
-    - name: Activate DHCP on all network devices
+    - name: Activate DHCP if NetworkManager changed
+      shell: |
+        dhclient
+        sleep 1
+        dhclient
+      changed_when: service_cfg_network_networkmanager.changed
+      when: service_cfg_network_networkmanager.changed
+      become: true
+
+    - name: Activate DHCP on all cabled network devices
       shell: |
         NIC_DATA=$(ip -br a | grep ^e) || exit 1
         NICS=$(echo "$NIC_DATA" | awk '{print $1}') || exit 1
@@ -39,7 +64,7 @@
     - debug:
         msg: "{{ shell_cfg_network_dhcp.stdout }}"
 
-    - name: Autoenable DHCP on all network devices
+    - name: Autoenable DHCP on all cabled network devices
       blockinfile:
         path: /etc/network/interfaces
         marker: '# {mark} - ETHERNET'
@@ -48,7 +73,28 @@
           auto /e*=eth
           allow-hotplug eth
           iface eth inet dhcp
-      when: "shell_cfg_network_dhcp.stdout != 'No need'"
+      when:
+        - "shell_cfg_network_dhcp.stdout != 'No need'"
+        - shell_cfg_network_has_wifi.stdout == ""
+
+    # this assumes that a computer with WIFI is suppoused to be managed by the
+    # user and not the admin. Also assumes that computers with only cabled
+    # networks are only managed by the admin.
+    - name: Use Network Manager on all network devices (because there is WIFI)
+      blockinfile:
+        path: /etc/network/interfaces
+        marker: '# {mark} - ETHERNET'
+        block: |
+          # Don't change this, NetworkManager is used because there is WIFI
+      when:
+        - "shell_cfg_network_dhcp.stdout == 'No need'"
+        - shell_cfg_network_has_wifi.stdout != ""
+
+    #    - name: Let the current user manage the network (because there is WIFI)
+    #      user:
+    #        name: '{{ current_user }}'
+    #        group: netdev
+    #      when: shell_cfg_network_has_wifi.stdout != ""
 
     - name: Set primary DNS servers
       lineinfile:

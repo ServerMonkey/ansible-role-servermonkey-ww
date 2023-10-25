@@ -66,14 +66,12 @@
 
     - name: Install AMD GPU driver
       package:
-        name:
-          - firmware-amd-graphics
+        name: firmware-amd-graphics
       when: '"AMD" in base_detect_gpu.stdout or install_base_all_firmware'
 
     - name: Install nvidia-detect
       package:
-        name:
-          - nvidia-detect
+        name: nvidia-detect
       when: '"NVIDIA" in base_detect_gpu.stdout'
 
     - name: Install additional cli tools

@@ -1,22 +1,45 @@
 ---
 #info: Restore a custom XFCE configuration and theme.
 #info: On VMs will always disable suspend, blanking and screensaver.
-- name: Force all XFCE users to logout
-  shell: 'skill -KILL xfce4-session'
-
-- name: Delete XFCE cache
-  file:
-    state: absent
-    path: '/home/{{ current_user }}/.cache/xfce4'
-  changed_when: false
-
-- name: Delete sessions cache
-  file:
-    state: absent
-    path: '/home/{{ current_user }}/.cache/sessions'
-  changed_when: false
-
 - block:
+    - name: Force all XFCE users to logout
+      shell: 'skill -KILL xfce4-session'
+
+    - name: Stop xfconfd
+      shell: 'skill -KILL xfconfd'
+
+    - name: Delete XFCE cache
+      file:
+        state: absent
+        path: '/home/{{ current_user }}/.cache/xfce4'
+      changed_when: false
+
+    - name: Delete sessions cache
+      file:
+        state: absent
+        path: '/home/{{ current_user }}/.cache/sessions'
+      changed_when: false
+
+    - name: Check if APT numix theme is installed
+      shell: apt list numix-gtk-theme 2>/dev/null
+      register: shell_cfg_xfce_numix
+      changed_when: false
+
+    - name: Create gtk directory
+      file:
+        path: '/home/{{ current_user }}/.config/gtk-3.0'
+        state: directory
+        recurse: yes
+      become_user: '{{ current_user }}'
+      when: "'installed' not in shell_cfg_xfce_numix.stdout_lines"
+
+    - name: Bugfix GTK 3 numix button style
+      copy:
+        src: gtk-numix-bugfix.css
+        dest: '/home/{{ current_user }}/.config/gtk-3.0/gtk.css'
+      become_user: '{{ current_user }}'
+      when: "'installed' not in shell_cfg_xfce_numix.stdout_lines"
+
     - name: Delete XFCE cfg
       file:
         state: absent
@@ -64,4 +87,6 @@
             </property>
           </channel>
       become_user: '{{ current_user }}'
-  when: ansible_virtualization_role == 'guest' or cfg_xfce_suspend == false
+  when:
+    - ansible_distribution == 'Debian'
+    - ansible_virtualization_role == 'guest' or cfg_xfce_suspend == false
