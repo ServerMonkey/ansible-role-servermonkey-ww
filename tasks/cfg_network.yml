@@ -28,13 +28,13 @@
         - shell_cfg_network_has_wifi.stdout == ""
 
     - name: Activate DHCP if NetworkManager changed
-      shell: |
-        dhclient
-        sleep 1
-        dhclient
+      shell: dhclient -v
       changed_when: service_cfg_network_networkmanager.changed
       when: service_cfg_network_networkmanager.changed
-      become: true
+      register: shell_cfg_network_dhcp_nm
+
+    - debug:
+        msg: "{{ shell_cfg_network_dhcp_nm.stdout }}"
 
     - name: Activate DHCP on all cabled network devices
       shell: |
