@@ -27,15 +27,6 @@
         - ansible_distribution == "Kali"
         - shell_cfg_network_has_wifi.stdout == ""
 
-    - name: Activate DHCP if NetworkManager changed
-      shell: dhclient -v
-      changed_when: service_cfg_network_networkmanager.changed
-      when: service_cfg_network_networkmanager.changed
-      register: shell_cfg_network_dhcp_nm
-
-    - debug:
-        msg: "{{ shell_cfg_network_dhcp_nm.stdout }}"
-
     - name: Activate DHCP on all cabled network devices
       shell: |
         NIC_DATA=$(ip -br a | grep ^e) || exit 1
@@ -45,11 +36,11 @@
             IP=$(echo "$NIC_DATA" | grep "^$i" | awk '{print $3}')
             if [ "$STATE" != "UP" ]; then
                 echo "Interface '$i' state is not UP, running dhclient"
-                dhclient || exit 1
+                dhclient 2>&1
                 exit
             elif [ "$IP" = "" ]; then
                 echo "No IP assigned to '$i', running dhclient"
-                dhclient || exit 1
+                dhclient 2>&1
                 exit
             else
                 SKIP=true
@@ -61,8 +52,10 @@
       register: shell_cfg_network_dhcp
       changed_when: "shell_cfg_network_dhcp.stdout != 'No need'"
 
-    - debug:
+    - name: Show dhclient output
+      debug:
         msg: "{{ shell_cfg_network_dhcp.stdout }}"
+      when: shell_cfg_network_dhcp.stdout != 'No need'
 
     - name: Autoenable DHCP on all cabled network devices
       blockinfile:
@@ -73,11 +66,12 @@
           auto /e*=eth
           allow-hotplug eth
           iface eth inet dhcp
-      when:
-        - "shell_cfg_network_dhcp.stdout != 'No need'"
-        - shell_cfg_network_has_wifi.stdout == ""
+      when: >
+        ("shell_cfg_network_dhcp.stdout != 'No need'" and
+        shell_cfg_network_has_wifi.stdout == "") or
+        service_cfg_network_networkmanager.changed
 
-    # this assumes that a computer with WIFI is suppoused to be managed by the
+    # this assumes that a computer with WI-FI is suppoused to be managed by the
     # user and not the admin. Also assumes that computers with only cabled
     # networks are only managed by the admin.
     - name: Use Network Manager on all network devices (because there is WIFI)
@@ -104,9 +98,37 @@
       register: lineinfile_cfg_network_dhcp_dns
       when: im_dns is defined
 
-    - name: Renew DHCP on all network devices
-      shell: dhclient
-      changed_when: lineinfile_cfg_network_dhcp_dns.changed
+    - name: Renew DHCP for DNS and NetworkManager changes to take effect
+      shell: dhclient 2>&1
+      register: shell_cfg_network_dhcp_again
+      when: >
+        service_cfg_network_networkmanager.changed or
+        im_dns is defined
+
+    - name: Show dhclient output
+      debug:
+        msg: "{{ shell_cfg_network_dhcp_again.stdout }}"
+      when: >
+        service_cfg_network_networkmanager.changed or
+        im_dns is defined
+
+    - name: Verify DHCP on all network devices
+      shell: |
+        NIC_DATA=$(ip -br a | grep -wv ^lo) || exit 1
+        NICS=$(echo "$NIC_DATA" | awk '{print $1}') || exit 1
+        for i in $NICS; do
+            STATE=$(echo "$NIC_DATA" | grep "^$i" | awk '{print $2}')
+            IP=$(echo "$NIC_DATA" | grep "^$i" | awk '{print $3}')
+            if [ "$STATE" != "UP" ]; then
+                echo "Interface '$i' state is not UP"
+                exit 1
+            elif [ "$IP" = "" ]; then
+                echo "No IP assigned to '$i'"
+                exit 1
+            fi
+        done
+      changed_when: false
+
   when: ansible_os_family == "Debian"
 
 #- block:

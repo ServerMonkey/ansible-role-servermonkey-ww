@@ -59,7 +59,7 @@ find_pids() {
     echo "$PIDS"
 }
 
-process_wait() {
+process_has_stopped() {
     local PIDS
     for counter in $(seq 10); do
         PIDS=$(find_pids "$1")
@@ -68,8 +68,8 @@ process_wait() {
         fi
         sleep 1
         if [ "$counter" = 10 ]; then
-            echo "timeout, waiting for process to quit PIDS:$PIDS"
-            exit 1
+            echo "process is still running PIDS:$PIDS"
+            return 1
         fi
     done
 }
@@ -77,35 +77,44 @@ process_wait() {
 process_quit() {
     local PIDS
     local FOUND
+    local KILL_METHOD="$2"
+    local KILL_SIGNAL
+
+    if [ "$KILL_METHOD" = "soft" ]; then
+        KILL_SIGNAL=9
+    elif [ "$KILL_METHOD" = "hard" ]; then
+        KILL_SIGNAL=15
+    fi
 
     # wait for process to start
     sleep 1
 
     # find a running process
     PIDS=$(find_pids "$1")
+    # kill all processes
     if [ -n "$PIDS" ]; then
-        # kill that process
         if [ "$OS" = windows ]; then
             for SUBPID in $PIDS; do
                 FOUND=$(ps -p "$SUBPID" -o comm=)
-                echo "quit process PID:$SUBPID NAME:$1 FOUND:$FOUND"
+                echo "quit process PID:$SUBPID NAME:$1 CMD:$FOUND"
                 taskkill "/PID" "$SUBPID" "/F" 1>/dev/null 2>&1 ||
                     echo "FAILED: taskkill /PID $SUBPID /F"
             done
         else
-            # soft
             for SUBPID in $PIDS; do
                 FOUND=$(ps -p "$SUBPID" -o comm=)
-                echo "quit process PID:$SUBPID NAME:$1 FOUND:$FOUND"
-                kill -9 "$SUBPID" || echo "skip soft kill: $SUBPID"
-                process_wait "$1"
-                kill -15 "$SUBPID" || echo "skip hard kill: $SUBPID"
-                process_wait "$1"
+                echo "$KILL_METHOD quit process PID:$SUBPID NAME:$1 CMD:$FOUND"
+                kill -"$KILL_SIGNAL" "$SUBPID" ||
+                    echo "skip $KILL_METHOD quit: $SUBPID"
+                if [ "$KILL_METHOD" = "hard" ]; then
+                    process_has_stopped "$1" || error "hard kill failed"
+                else
+                    process_has_stopped "$1"
+                fi
             done
         fi
-
-        # check that is has quit
-        process_wait "$1" || error "process_wait $1"
+    else
+        echo "process already quit: $1"
     fi
 }
 
@@ -114,18 +123,33 @@ FILE_PREFS=$(findprofile)
 if [ -z "$FILE_PREFS" ]; then
     if [ "$OS" = windows ]; then
         "$BIN_FIREFOX" -headless -CreateProfile default 1>/dev/null 2>&1
-        process_wait "firefox.exe"
-        process_quit "firefox.exe"
+        process_has_stopped "firefox.exe" || process_quit "firefox.exe"
+        process_has_stopped "firefox.exe" || exit 1
         "$BIN_FIREFOX" -headless -silent -setDefaultBrowser 1>/dev/null 2>&1
-        process_wait "firefox.exe"
-        process_quit "firefox.exe"
+        process_has_stopped "firefox.exe" || process_quit "firefox.exe"
+        process_has_stopped "firefox.exe" || exit 1
     else
+        PROCESS_A="headless -url localhost"
         "$BIN_FIREFOX" -headless -url localhost 1>/dev/null 2>&1 &
-        sleep 3
-        process_quit "headless -url localhost"
+        sleep 2
+        process_quit "$PROCESS_A" "soft"
+        PROCESS_A_PIDS=$(find_pids "$PROCESS_A")
+        if [ -n "$PROCESS_A_PIDS" ]; then
+            echo "firefox is still running, forcing process termination"
+            sleep 4
+            process_quit "$PROCESS_A" "hard" || exit 1
+        fi
+
+        PROCESS_B="headless -silent -setDefaultBrowser"
         "$BIN_FIREFOX" -headless -silent -setDefaultBrowser 1>/dev/null 2>&1 &
-        sleep 3
-        process_quit "headless -silent -setDefaultBrowser"
+        sleep 2
+        process_quit "$PROCESS_B" "soft"
+        PROCESS_B_PIDS=$(find_pids "$PROCESS_B")
+        if [ -n "$PROCESS_B_PIDS" ]; then
+            echo "firefox is still running, forcing process termination"
+            sleep 4
+            process_quit "$PROCESS_B" "hard" || exit 1
+        fi
     fi
 fi
 
